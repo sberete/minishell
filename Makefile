@@ -3,36 +3,31 @@ CFLAGS = -Werror -Wextra -Wall -MMD -g3 -fPIC
 INCLUDES = -Iincludes -I./lib/ft_printf/includes -I./lib/libft/includes -I./lib/get_next_line/includes
 
 LIBPRINTF = lib/ft_printf/lib/libprintf.a
-
 LIBFT = lib/libft/lib/libft.a
-
 GNL = lib/get_next_line/lib/getnextline.a
 
-SRC_DIR = src
+LDFLAGS = -lreadline
 
+SRC_DIR = src
 OBJ_DIR = objs
 
 SRCS = $(shell find $(SRC_DIR) -name '*.c')
-
-OBJS = $(addprefix $(OBJ_DIR)/,$(addsuffix .o,$(notdir $(basename $(SRCS)))))
-
+OBJS = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRCS))
 DEPENDS = $(OBJS:.o=.d)
 
 NAME = minishell
 
--include $(DEPEND)
+-include $(DEPENDS)
 
 .PHONY: all
-all: $(NAME) 
+all: $(NAME)
 
-$(NAME): $(OBJS) $(LIBPRINTF) $(LIBFT)
-			$(CC) $^ -o $@
+$(NAME): $(OBJS) $(LIBPRINTF) $(LIBFT) $(GNL)
+	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
-
-$(OBJ_DIR):
-	mkdir -p $(OBJ_DIR)
 
 $(LIBPRINTF):
 	$(MAKE) -C lib/ft_printf
@@ -52,12 +47,10 @@ clean:
 
 .PHONY: fclean
 fclean: clean
-	rm -rf $(NAME)
+	rm -f $(NAME)
 	$(MAKE) -C lib/ft_printf fclean
 	$(MAKE) -C lib/libft fclean
 	$(MAKE) -C lib/get_next_line fclean
 
 .PHONY: re
 re: fclean all
-
-.PHONY: all clean fclean re

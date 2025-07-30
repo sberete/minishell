@@ -1,0 +1,9 @@
+Cours.txt
+includes
+lib
+Makefile
+minishell
+objs
+s
+src
+supp.supp

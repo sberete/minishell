@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ft_substr.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/03 18:07:38 by sberete           #+#    #+#             */
-/*   Updated: 2025/01/15 20:01:45 by sberete          ###   ########.fr       */
+/*   Updated: 2025/08/03 00:49:45 by sxrimu           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,22 +17,30 @@
 char	*ft_substr(char const *s, unsigned int start, size_t len)
 {
 	char	*str;
+	size_t	s_len;
 	size_t	i;
-	size_t	j;
-	size_t	size;
 
-	if (len > ft_strlen(s))
-		size = ft_strlen(s);
-	else
-		size = len;
-	str = malloc(sizeof(char) * (size + 1));
-	if (!s || !str)
+	if (!s)
 		return (NULL);
-	i = start;
-	j = 0;
-	while (i < ft_strlen(s) && j < size)
-		str[j++] = s[i++];
-	str[j] = '\0';
+
+	s_len = ft_strlen(s);
+	if (start >= s_len)
+		return (ft_strdup("")); // retourne chaîne vide si start hors limite
+
+	if (len > s_len - start)
+		len = s_len - start;
+
+	str = malloc(len + 1);
+	if (!str)
+		return (NULL);
+
+	i = 0;
+	while (i < len && s[start + i])
+	{
+		str[i] = s[start + i];
+		i++;
+	}
+	str[i] = '\0';
 	return (str);
 }
 /*

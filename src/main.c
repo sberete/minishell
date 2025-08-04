@@ -89,52 +89,64 @@ static int	get_operator_len(const char *str)
 
 char *extract_token(const char *line, int *i)
 {
+	char	*token = NULL;
+	char	*part = NULL;
+	char	quote;
 	int		start;
-	char	*token;
-	char	quote = '\0';
 
-	// Skip leading spaces
+	// Skip spaces
 	while (line[*i] == ' ')
 		(*i)++;
-
 	if (!line[*i])
 		return (NULL);
-
-	// Handle operators like &&, ||, etc.
+	// Handle operators
 	int op_len = get_operator_len(&line[*i]);
 	if (op_len > 0)
 	{
 		start = *i;
 		*i += op_len;
-		token = ft_substr(line, start, op_len);
-		printf("extract_token: operator token=[%s]\n", token);
-		return (token);
+		return ft_substr(line, start, op_len);
 	}
-
-	// Handle quoted strings
-	if (line[*i] == '\'' || line[*i] == '\"')
+	// Build the token (quoted and unquoted parts)
+	while (line[*i] && line[*i] != ' ' && !is_operator_start(line[*i]))
 	{
-		quote = line[*i];
-		start = ++(*i); // Skip opening quote
-		while (line[*i] && line[*i] != quote)
-			(*i)++;
-		token = ft_substr(line, start, *i - start); // Extrait sans quotes
-		if (line[*i] == quote)
-			(*i)++; // Skip closing quote
-		printf("extract_token: quoted token=[%s]\n", token);
-		return (token);
+		if (line[*i] == '\'' || line[*i] == '"')
+		{
+			quote = line[*i];
+			start = ++(*i);
+			while (line[*i] && line[*i] != quote)
+				(*i)++;
+			if (!line[*i]) // quote non fermée
+			{
+				fprintf(stderr, "Erreur: quote non fermée\n");
+				free(token); // au cas où tu avais déjà commencé à construire le token
+				return (NULL);
+			}
+			part = ft_substr(line, start, *i - start);
+			(*i)++; // skip la quote fermante
+		}
+		else
+		{
+			start = *i;
+			while (line[*i] && line[*i] != ' ' &&
+				   !is_operator_start(line[*i]) &&
+				   line[*i] != '\'' && line[*i] != '"')
+				(*i)++;
+			part = ft_substr(line, start, *i - start);
+		}
+
+		if (token)
+		{
+			char *tmp = token;
+			token = ft_strjoin(token, part);
+			free(tmp);
+		}
+		else
+			token = ft_strdup(part);
+		free(part);
 	}
-
-	// Normal word (non-quoted)
-	start = *i;
-	while (line[*i] && line[*i] != ' ' && !is_operator_start(line[*i])
-		&& line[*i] != '\'' && line[*i] != '\"')
-		(*i)++;
-	token = ft_substr(line, start, *i - start);
-	printf("extract_token: word token=[%s]\n", token);
-	return (token);
+	return token;
 }
-
 int	tokenize_line(const char *line, t_token **tokens)
 {
 	int		i;

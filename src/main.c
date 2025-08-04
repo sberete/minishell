@@ -87,17 +87,21 @@ static int	get_operator_len(const char *str)
 	return (0);
 }
 
-char	*extract_token(const char *line, int *i)
+char *extract_token(const char *line, int *i)
 {
 	int		start;
-	int		len;
-	int		op_len;
 	char	*token;
+	char	quote = '\0';
 
-	len = 0;
+	// Skip leading spaces
 	while (line[*i] == ' ')
 		(*i)++;
-	op_len = get_operator_len(&line[*i]);
+
+	if (!line[*i])
+		return (NULL);
+
+	// Handle operators like &&, ||, etc.
+	int op_len = get_operator_len(&line[*i]);
 	if (op_len > 0)
 	{
 		start = *i;
@@ -106,13 +110,27 @@ char	*extract_token(const char *line, int *i)
 		printf("extract_token: operator token=[%s]\n", token);
 		return (token);
 	}
-	start = *i;
-	while (line[*i] && !is_operator_start(line[*i]) && line[*i] != ' ')
+
+	// Handle quoted strings
+	if (line[*i] == '\'' || line[*i] == '\"')
 	{
-		(*i)++;
-		len++;
+		quote = line[*i];
+		start = ++(*i); // Skip opening quote
+		while (line[*i] && line[*i] != quote)
+			(*i)++;
+		token = ft_substr(line, start, *i - start); // Extrait sans quotes
+		if (line[*i] == quote)
+			(*i)++; // Skip closing quote
+		printf("extract_token: quoted token=[%s]\n", token);
+		return (token);
 	}
-	token = ft_substr(line, start, len);
+
+	// Normal word (non-quoted)
+	start = *i;
+	while (line[*i] && line[*i] != ' ' && !is_operator_start(line[*i])
+		&& line[*i] != '\'' && line[*i] != '\"')
+		(*i)++;
+	token = ft_substr(line, start, *i - start);
 	printf("extract_token: word token=[%s]\n", token);
 	return (token);
 }

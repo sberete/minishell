@@ -1,70 +1,16 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   main.c                                             :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/08/05 19:53:11 by sberete           #+#    #+#             */
+/*   Updated: 2025/08/14 22:20:18 by sberete          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "minishell.h"
-
-t_token_type	get_token_type(const char *str)
-{
-	if (!str)
-		return (T_UNKNOWN);
-	if (strcmp(str, "&&") == 0)
-		return (T_AND);
-	else if (strcmp(str, "||") == 0)
-		return (T_OR);
-	else if (strcmp(str, "|") == 0)
-		return (T_PIPE);
-	else if (strcmp(str, "<<") == 0)
-		return (T_HEREDOC);
-	else if (strcmp(str, ">>") == 0)
-		return (T_APPEND);
-	else if (strcmp(str, "<") == 0)
-		return (T_REDIR_IN);
-	else if (strcmp(str, ">") == 0)
-		return (T_REDIR_OUT);
-	else if (strcmp(str, ";") == 0)
-		return (T_SEPARATOR);
-	else if (strcmp(str, "(") == 0)
-		return (T_PAREN_OPEN);
-	else if (strcmp(str, ")") == 0)
-		return (T_PAREN_CLOSE);
-	else if (strcmp(str, "*") == 0)
-		return (T_WILDCARD);
-	else if (*str == '\0')
-		return (T_END);
-	return (T_WORD);
-}
-
-t_token	*new_token_node(char *value)
-{
-	t_token	*token;
-
-	token = malloc(sizeof(t_token));
-	if (!token)
-		return (NULL);
-	token->value = value;
-	token->type = get_token_type(value);
-	token->next = NULL;
-	printf("new_token_node: created token [%s] with type %d\n", value,
-		token->type);
-	return (token);
-}
-
-bool	add_token_back(t_token **head, t_token *new)
-{
-	t_token	*tmp;
-
-	if (!new)
-		return (false);
-	if (!*head)
-	{
-		*head = new;
-		printf("add_token_back: added token [%s] as head\n", new->value);
-		return (true);
-	}
-	tmp = *head;
-	while (tmp->next)
-		tmp = tmp->next;
-	tmp->next = new;
-	printf("add_token_back: added token [%s] at the end\n", new->value);
-	return (true);
-}
 
 static int	is_operator_start(char c)
 {
@@ -87,27 +33,28 @@ static int	get_operator_len(const char *str)
 	return (0);
 }
 
-char *extract_token(const char *line, int *i)
+char	*extract_token(const char *line, int *i)
 {
-	char	*token = NULL;
-	char	*part = NULL;
+	char	*token;
+	char	*part;
 	char	quote;
 	int		start;
+	int		op_len;
+	char	*tmp;
 
-	// Skip spaces
+	token = NULL;
+	part = NULL;
 	while (line[*i] == ' ')
 		(*i)++;
 	if (!line[*i])
 		return (NULL);
-	// Handle operators
-	int op_len = get_operator_len(&line[*i]);
+	op_len = get_operator_len(&line[*i]);
 	if (op_len > 0)
 	{
 		start = *i;
 		*i += op_len;
-		return ft_substr(line, start, op_len);
+		return (ft_substr(line, start, op_len));
 	}
-	// Build the token (quoted and unquoted parts)
 	while (line[*i] && line[*i] != ' ' && !is_operator_start(line[*i]))
 	{
 		if (line[*i] == '\'' || line[*i] == '"')
@@ -116,28 +63,26 @@ char *extract_token(const char *line, int *i)
 			start = ++(*i);
 			while (line[*i] && line[*i] != quote)
 				(*i)++;
-			if (!line[*i]) // quote non fermée
+			if (!line[*i])
 			{
 				fprintf(stderr, "Erreur: quote non fermée\n");
-				free(token); // au cas où tu avais déjà commencé à construire le token
+				free(token);
 				return (NULL);
 			}
 			part = ft_substr(line, start, *i - start);
-			(*i)++; // skip la quote fermante
+			(*i)++;
 		}
 		else
 		{
 			start = *i;
-			while (line[*i] && line[*i] != ' ' &&
-				   !is_operator_start(line[*i]) &&
-				   line[*i] != '\'' && line[*i] != '"')
+			while (line[*i] && line[*i] != ' ' && !is_operator_start(line[*i])
+				&& line[*i] != '\'' && line[*i] != '"')
 				(*i)++;
 			part = ft_substr(line, start, *i - start);
 		}
-
 		if (token)
 		{
-			char *tmp = token;
+			tmp = token;
 			token = ft_strjoin(token, part);
 			free(tmp);
 		}
@@ -145,8 +90,9 @@ char *extract_token(const char *line, int *i)
 			token = ft_strdup(part);
 		free(part);
 	}
-	return token;
+	return (token);
 }
+
 int	tokenize_line(const char *line, t_token **tokens)
 {
 	int		i;
@@ -176,55 +122,46 @@ int	tokenize_line(const char *line, t_token **tokens)
 	}
 	return (0);
 }
-
-void	free_token_list(t_token *head)
+void	print_list(t_token *tokens)
 {
 	t_token	*tmp;
 
-	while (head)
+	printf("Tokens extraits :\n");
+	tmp = tokens;
+	while (tmp)
 	{
-		tmp = head->next;
-		free(head->value);
-		free(head);
-		head = tmp;
+		printf("Token: %-10s | Type: %d\n", tmp->value, tmp->type);
+		tmp = tmp->next;
 	}
 }
-
 int	main(void)
 {
-	char	*line;
 	t_token	*tokens;
-	t_token	*tmp;
+	t_data data;
 
+	memset(&data, 0, sizeof(t_data));
 	while (1)
 	{
-		line = readline("minishell > ");
-		if (!line)
+		data.line = readline("minishell > ");
+		if (!data.line)
 		{
 			printf("exit\n");
 			break ;
 		}
-		if (*line)
-			add_history(line);
+		if (*data.line)
+			add_history(data.line);
 		tokens = NULL;
-		if (tokenize_line(line, &tokens) != 0)
+		if (tokenize_line(data.line, &tokens) != 0)
 		{
 			printf("Erreur de tokenisation\n");
 			free_token_list(tokens);
-			free(line);
+			free(data.line);
 			continue ;
 		}
-		printf("Tokens extraits :\n");
-		tmp = tokens;
-		while (tmp)
-		{
-			printf("Token: %-10s | Type: %d\n", tmp->value, tmp->type);
-			tmp = tmp->next;
-		}
+		print_list(tokens);
 		free_token_list(tokens);
-		free(line);
+		free(data.line);
 	}
-	return (0);
 }
 
 /*

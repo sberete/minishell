@@ -103,5 +103,6 @@ char *append_token_part(char *token, char *part);
 void	print_tokens(t_token *tokens);
 void free_token_list(t_token **head);
 void free_data(t_data *data);
+void	print_syntax_error(char *msg);
 
 #endif

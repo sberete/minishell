@@ -6,7 +6,7 @@
 /*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/05 19:53:11 by sberete           #+#    #+#             */
-/*   Updated: 2025/08/15 17:02:06 by sxrimu           ###   ########.fr       */
+/*   Updated: 2025/08/15 21:03:01 by sxrimu           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,7 +33,7 @@ int	main(void)
 		}
 		else
 		{
-			printf("Erreur de tokenisation\n");
+			print_syntax_error("tokenization");
 			free_data(&data);
 			continue ;
 		}

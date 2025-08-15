@@ -2,47 +2,55 @@
 
 char	*extract_operator(t_data *data, int *i)
 {
-	int op_len = get_operator_len(&data->line[*i]);
-	char *token;
+	int		op_len;
+	char	*token;
 
+	op_len = get_operator_len(&data->line[*i]);
 	if (op_len > 0)
 	{
 		token = ft_substr(data->line, *i, op_len);
+		if (!token)
+			return (NULL);
 		*i += op_len;
-		return token;
+		return (token);
 	}
-	return NULL;
+	return (NULL);
 }
 
 char	*extract_simple(t_data *data, int *i)
 {
-	int start = *i;
+	int	start;
 
-	while (data->line[*i] && data->line[*i] != ' ' &&
-		   !is_operator_start(data->line[*i]) &&
-		   data->line[*i] != '\'' && data->line[*i] != '"')
+	start = *i;
+	while (data->line[*i]
+		&& data->line[*i] != ' '
+		&& !is_operator_start(data->line[*i])
+		&& data->line[*i] != '\''
+		&& data->line[*i] != '"')
 		(*i)++;
-
-	return ft_substr(data->line, start, *i - start);
+	return (ft_substr(data->line, start, *i - start));
 }
 
 char	*extract_quoted(t_data *data, int *i)
 {
-	char quote = data->line[*i];
-	int start;
-	char *token;
+	char	quote;
+	int		start;
+	char	*token;
 
-	start = ++(*i); // sauter la quote d'ouverture
+	quote = data->line[*i];
+	start = ++(*i); // skip quote opening
 	while (data->line[*i] && data->line[*i] != quote)
 		(*i)++;
 	if (!data->line[*i])
 	{
-		fprintf(stderr, "Erreur: quote non fermée\n");
-		return NULL;
+		print_syntax_error("unslosed quote");
+		return (NULL);
 	}
 	token = ft_substr(data->line, start, *i - start);
-	(*i)++; // sauter la quote de fermeture
-	return token;
+	if (!token)
+		return (NULL);
+	(*i)++; // skip quote closing
+	return (token);
 }
 
 void	skip_spaces(t_data *data, int *i)

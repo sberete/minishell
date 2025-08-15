@@ -31,22 +31,9 @@ bool	add_token_back(t_token **head, t_token *new)
 	return (true);
 }
 
-void	free_token_list(t_token *head)
-{
-	t_token	*tmp;
-
-	while (head)
-	{
-		tmp = head->next;
-		free(head->value);
-		free(head);
-		head = tmp;
-	}
-}
 t_token_type	get_token_type(const char *str)
 {
-	if (!str)
-		return (T_UNKNOWN);
+	if (!str) return (T_UNKNOWN);
 	if (ft_strcmp(str, "&&") == 0)
 		return (T_AND);
 	else if (ft_strcmp(str, "||") == 0)
@@ -69,7 +56,6 @@ t_token_type	get_token_type(const char *str)
 		return (T_PAREN_CLOSE);
 	else if (ft_strcmp(str, "*") == 0)
 		return (T_WILDCARD);
-	else if (*str == '\0')
-		return (T_END);
+	else if (*str == '\0') return (T_END);
 	return (T_WORD);
 }

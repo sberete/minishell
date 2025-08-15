@@ -79,9 +79,9 @@ typedef struct s_ast
 
 typedef struct s_data
 {
-	char *line;      // La ligne brute lue par readline
+	char *line;      // Readline
 	t_token *tokens; // Liste chaînée de tokens
-	t_ast *ast;      // Arbre syntaxique
+	t_ast *ast;      // AST
 	char **env;      // Copie de l'environnement
 	int last_exit;   // Code de sortie de la dernière commande
 	bool running;    // Booléen pour savoir si on continue la boucle
@@ -89,7 +89,19 @@ typedef struct s_data
 
 t_token				*new_token_node(char *value);
 bool				add_token_back(t_token **head, t_token *new);
-void				free_token_list(t_token *head);
 t_token_type		get_token_type(const char *str);
+int	is_operator_start(char c);
+int	get_operator_len(const char *str);
+char *extract_token(t_data *data, int *i);
+int	tokenize_line(t_data *data);
+char	*extract_operator(t_data *data, int *i);
+char	*extract_simple(t_data *data, int *i);
+char	*extract_quoted(t_data *data, int *i);
+void	skip_spaces(t_data *data, int *i);
+char *append_token_part(char *token, char *part);
+
+void	print_tokens(t_token *tokens);
+void free_token_list(t_token **head);
+void free_data(t_data *data);
 
 #endif

@@ -6,11 +6,28 @@
 /*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/05 19:53:11 by sberete           #+#    #+#             */
-/*   Updated: 2025/08/15 21:03:01 by sxrimu           ###   ########.fr       */
+/*   Updated: 2025/08/22 00:12:51 by sxrimu           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
+
+char *read_input(t_data *data)
+{
+	char *line;
+
+	line = readline("minishell > ");
+	if (!line)
+	{
+		printf("exit\n");
+		rl_clear_history();
+		free_data(data);
+		exit(0);
+	}
+	if (*line)
+		add_history(line);
+	return line;
+}
 
 int	main(void)
 {
@@ -19,17 +36,14 @@ int	main(void)
 	memset(&data, 0, sizeof(t_data));
 	while (1)
 	{
-		data.line = readline("minishell > ");
-		if (!data.line)
-		{
-			printf("exit\n");
-			break ;
-		}
-		if (*data.line)
-			add_history(data.line);
+		data.line = read_input(&data);
 		if (tokenize_line(&data) == 0)
 		{
-			//créer l'ast
+			data.ast = parse_sequence(&data.tokens);  // <- Appel du parseur
+			if (data.ast)
+				print_ast(data.ast, 0); // <- Debug, afficher l’arbre
+			else
+				printf("Erreur: parsing\n");
 		}
 		else
 		{
@@ -37,7 +51,7 @@ int	main(void)
 			free_data(&data);
 			continue ;
 		}
-		print_tokens(data.tokens);
+		// print_tokens(data.tokens);
 		free_data(&data);
 	}
 }

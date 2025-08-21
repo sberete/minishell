@@ -77,11 +77,22 @@ typedef struct s_ast
 	struct s_ast	*child;
 }					t_ast;
 
+typedef struct s_exec
+{
+    int     prev_read;   // fd de lecture du pipe précédent (-1 si aucun)
+    int     pipe_fd[2];  // fd pour le pipe courant [0] = read, [1] = write
+    char    *path;       // chemin absolu de la commande (résolu via PATH)
+    char    **argv;      // arguments (venant de l’AST)
+    t_redir *redirs;     // redirections à appliquer
+    pid_t   pid;         // pid du processus (utile pour wait)
+}   t_exec;
+
 typedef struct s_data
 {
 	char *line;      // Readline
 	t_token *tokens; // Liste chaînée de tokens
 	t_ast *ast;      // AST
+	t_exec *exec;	 // Exec
 	char **env;      // Copie de l'environnement
 	int last_exit;   // Code de sortie de la dernière commande
 	bool running;    // Booléen pour savoir si on continue la boucle
@@ -104,5 +115,12 @@ void	print_tokens(t_token *tokens);
 void free_token_list(t_token **head);
 void free_data(t_data *data);
 void	print_syntax_error(char *msg);
+void	free_ast(t_ast *node);
+t_ast *new_ast_node(t_node_type type);
+t_redir *new_redir(t_redir_type type, char *filename);
+void add_redir(t_ast *cmd_node, t_redir *redir);
+t_ast *parse_sequence(t_token **tokens);
+void	print_ast(t_ast *node, int depth);
+t_token *parse_redirection(t_ast *cmd, t_token *tok);
 
 #endif

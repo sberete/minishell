@@ -6,43 +6,27 @@ t_ast *parse_pipeline(t_token **tokens);
 t_ast *parse_command(t_token **tokens);
 t_ast *parse_group(t_token **tokens);
 
-static int count_args(t_token *tok)
+static int count_cmd_args(t_token *tok)
 {
     int count = 0;
 
-    while (tok && tok->type == T_WORD)
+    while (tok && tok->type != T_AND && tok->type != T_OR
+           && tok->type != T_PIPE && tok->type != T_SEPARATOR
+           && tok->type != T_PAREN_CLOSE)
     {
-        count++;
-        tok = tok->next;
-    }
-    return (count);
-}
-
-// Construit argv[] à partir des tokens
-char **build_argv(t_token *tok)
-{
-    int     count;
-    char  **argv;
-    int     i;
-
-    count = count_args(tok);
-    argv = malloc(sizeof(char *) * (count + 1));
-    if (!argv)
-        return (NULL);
-    i = 0;
-    while (tok && tok->type == T_WORD)
-    {
-        argv[i] = ft_strdup(tok->value); // ✅ on duplique pour éviter des free doubles
-        if (!argv[i])
+        if (tok->type == T_WORD)
+            count++;
+        else if (tok->type == T_REDIR_IN || tok->type == T_REDIR_OUT
+                 || tok->type == T_APPEND || tok->type == T_HEREDOC)
         {
-            free_tab(argv);
-            return (NULL);
+            tok = tok->next; // skip operator
+            if (tok && tok->type == T_WORD) // skip filename
+                tok = tok->next;
+            continue;
         }
-        i++;
         tok = tok->next;
     }
-    argv[i] = NULL;
-    return (argv);
+    return count;
 }
 
 t_ast *parse_sequence(t_token **tokens)
@@ -83,32 +67,39 @@ t_ast *parse_group(t_token **tokens)
 
 t_ast *parse_command(t_token **tokens)
 {
-    t_ast   *cmd;
-    t_token *tok;
-    t_token *start;
+    t_ast   *cmd = new_ast_node(NODE_CMD);
+    t_token *tok = *tokens;
+    int      argc = count_cmd_args(tok);
+    char   **argv = malloc(sizeof(char *) * (argc + 1));
+    int      i = 0;
 
-    cmd = new_ast_node(NODE_CMD);
-    start = *tokens;
-    tok = start;
-    // 1️⃣ Construire argv une bonne fois
-    cmd->argv = build_argv(tok);
-    // 2️⃣ Avancer les tokens (on s'arrête quand ce n'est plus du mot/redir)
+    if (!argv)
+        return NULL;
+
     while (tok && tok->type != T_AND && tok->type != T_OR
            && tok->type != T_PIPE && tok->type != T_SEPARATOR
            && tok->type != T_PAREN_CLOSE)
     {
         if (tok->type == T_WORD)
+        {
+            argv[i++] = ft_strdup(tok->value);
             tok = tok->next;
+        }
         else if (tok->type == T_REDIR_IN || tok->type == T_REDIR_OUT
                  || tok->type == T_APPEND || tok->type == T_HEREDOC)
         {
             tok = parse_redirection(cmd, tok);
             if (!tok)
-                return NULL; // erreur déjà affichée
+            {
+                free_tab(argv);
+                return NULL;
+            }
         }
         else
             tok = tok->next;
     }
+    argv[i] = NULL;
+    cmd->argv = argv;
     *tokens = tok;
     return cmd;
 }

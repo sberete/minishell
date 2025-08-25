@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   lexer_extract.c                                    :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/08/25 21:53:06 by sberete           #+#    #+#             */
+/*   Updated: 2025/08/25 21:53:07 by sberete          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "minishell.h"
 
 char	*extract_operator(t_data *data, int *i)
@@ -22,10 +34,8 @@ char	*extract_simple(t_data *data, int *i)
 	int	start;
 
 	start = *i;
-	while (data->line[*i]
-		&& data->line[*i] != ' '
-		&& !is_operator_start(data->line[*i])
-		&& data->line[*i] != '\''
+	while (data->line[*i] && data->line[*i] != ' '
+		&& !is_operator_start(data->line[*i]) && data->line[*i] != '\''
 		&& data->line[*i] != '"')
 		(*i)++;
 	return (ft_substr(data->line, start, *i - start));
@@ -59,22 +69,20 @@ void	skip_spaces(t_data *data, int *i)
 		(*i)++;
 }
 
-char *append_token_part(char *token, char *part)
+char	*append_token_part(char *token, char *part)
 {
-    char *tmp;
+	char	*tmp;
 
-    if (!part)
-        return token;
-    if (token)
-    {
-        tmp = token;
-        token = ft_strjoin(token, part);
-        free(tmp);
-    }
-    else
-        token = ft_strdup(part);
-    free(part);
-    return token;
+	if (!part)
+		return (token);
+	if (token)
+	{
+		tmp = token;
+		token = ft_strjoin(token, part);
+		free(tmp);
+	}
+	else
+		token = ft_strdup(part);
+	free(part);
+	return (token);
 }
-
-

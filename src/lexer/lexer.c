@@ -1,27 +1,42 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   lexer.c                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/08/25 21:52:23 by sberete           #+#    #+#             */
+/*   Updated: 2025/08/25 21:52:24 by sberete          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "minishell.h"
 
-char *extract_token(t_data *data, int *i)
+char	*extract_token(t_data *data, int *i)
 {
-	char *token = NULL;
-	char *part = NULL;
+	char	*token;
+	char	*part;
 
+	token = NULL;
+	part = NULL;
 	skip_spaces(data, i);
 	if (!data->line[*i])
-		return NULL;
+		return (NULL);
 	part = extract_operator(data, i);
 	if (part)
-		return part;
-	while (data->line[*i] && data->line[*i] != ' ' && !is_operator_start(data->line[*i]))
+		return (part);
+	while (data->line[*i] && data->line[*i] != ' '
+		&& !is_operator_start(data->line[*i]))
 	{
 		if (data->line[*i] == '\'' || data->line[*i] == '"')
 			part = extract_quoted(data, i);
 		else
 			part = extract_simple(data, i);
 		if (!part)
-			return free(token), NULL;
-        token = append_token_part(token, part);
+			return (free(token), NULL);
+		token = append_token_part(token, part);
 	}
-	return token;
+	return (token);
 }
 
 int	tokenize_line(t_data *data)

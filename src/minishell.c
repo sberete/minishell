@@ -3,18 +3,18 @@
 /*                                                        :::      ::::::::   */
 /*   minishell.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/05 19:53:11 by sberete           #+#    #+#             */
-/*   Updated: 2025/08/25 20:16:08 by sxrimu           ###   ########.fr       */
+/*   Updated: 2025/08/25 21:54:49 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-char *read_input(t_data *data)
+char	*read_input(t_data *data)
 {
-	char *line;
+	char	*line;
 
 	line = readline("minishell > ");
 	if (!line)
@@ -26,13 +26,13 @@ char *read_input(t_data *data)
 	}
 	if (*line)
 		add_history(line);
-	return line;
+	return (line);
 }
-
 
 int	main(int argc, char **argv, char **env)
 {
-	t_data data;
+	t_data	data;
+
 	(void)argc;
 	(void)argv;
 	memset(&data, 0, sizeof(t_data));
@@ -43,13 +43,13 @@ int	main(int argc, char **argv, char **env)
 		if (tokenize_line(&data) == 0)
 		{
 			print_tokens(data.tokens);
-			data.ast = parse_sequence(&data.tokens);  // <- Appel du parseur
+			data.ast = parse_sequence(&data.tokens); // <- Appel du parseur
 			if (data.ast)
 			{
 				print_ast(data.ast, 1);
 				exec_ast(data.ast, &data);
 			}
-				// print_ast(data.ast, 0); // <- Debug, afficher l’arbre
+			// print_ast(data.ast, 0); // <- Debug, afficher l’arbre
 			else
 				printf("Erreur: parsing\n");
 		}

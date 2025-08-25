@@ -1,8 +1,22 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   print_ast.c                                        :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/08/25 21:50:30 by sberete           #+#    #+#             */
+/*   Updated: 2025/08/25 22:00:10 by sberete          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "minishell.h"
 
 static void	print_indent(int depth)
 {
-	int i = 0;
+	int	i;
+
+	i = 0;
 	while (i < depth)
 	{
 		printf("  ");
@@ -30,10 +44,10 @@ static void	print_redirs(t_redir *redir, int depth)
 
 void	print_ast(t_ast *node, int depth)
 {
-	int i;
+	int	i;
 
 	if (!node)
-		return;
+		return ;
 	print_indent(depth);
 	if (node->type == NODE_CMD)
 	{
@@ -42,10 +56,7 @@ void	print_ast(t_ast *node, int depth)
 		if (node->argv)
 		{
 			while (node->argv[i])
-			{
-				printf("%s ", node->argv[i]);
-				i++;
-			}
+				printf("%s ", node->argv[i++]);
 		}
 		printf("\n");
 		print_redirs(node->redirs, depth + 1);
@@ -60,7 +71,6 @@ void	print_ast(t_ast *node, int depth)
 		printf("SEQ (;)\n");
 	else if (node->type == NODE_GROUP)
 		printf("GROUP (subshell)\n");
-
 	print_ast(node->left, depth + 1);
 	print_ast(node->right, depth + 1);
 	print_ast(node->child, depth + 1);

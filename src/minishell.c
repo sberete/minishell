@@ -6,7 +6,7 @@
 /*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/05 19:53:11 by sberete           #+#    #+#             */
-/*   Updated: 2025/08/22 00:12:51 by sxrimu           ###   ########.fr       */
+/*   Updated: 2025/08/25 20:16:08 by sxrimu           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,19 +29,27 @@ char *read_input(t_data *data)
 	return line;
 }
 
-int	main(void)
+
+int	main(int argc, char **argv, char **env)
 {
 	t_data data;
-
+	(void)argc;
+	(void)argv;
 	memset(&data, 0, sizeof(t_data));
+	data.env = env;
 	while (1)
 	{
 		data.line = read_input(&data);
 		if (tokenize_line(&data) == 0)
 		{
+			print_tokens(data.tokens);
 			data.ast = parse_sequence(&data.tokens);  // <- Appel du parseur
 			if (data.ast)
-				print_ast(data.ast, 0); // <- Debug, afficher l’arbre
+			{
+				print_ast(data.ast, 1);
+				exec_ast(data.ast, &data);
+			}
+				// print_ast(data.ast, 0); // <- Debug, afficher l’arbre
 			else
 				printf("Erreur: parsing\n");
 		}

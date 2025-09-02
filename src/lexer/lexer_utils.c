@@ -6,7 +6,7 @@
 /*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:52:29 by sberete           #+#    #+#             */
-/*   Updated: 2025/08/25 21:52:48 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/01 19:41:41 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,10 @@ t_token	*new_token_node(char *value)
 
 	token = malloc(sizeof(t_token));
 	if (!token)
+	{
+		free(value);
 		return (NULL);
+	}
 	token->value = value;
 	token->type = get_token_type(value);
 	token->next = NULL;

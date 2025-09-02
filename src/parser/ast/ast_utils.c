@@ -6,7 +6,7 @@
 /*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:52:13 by sberete           #+#    #+#             */
-/*   Updated: 2025/08/25 21:56:19 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/01 19:39:00 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,15 +16,8 @@ t_ast	*new_ast_node(t_node_type type)
 {
 	t_ast	*node;
 
-	node = malloc(sizeof(t_ast));
-	if (!node)
-		return (NULL);
+	node = ft_calloc(1, sizeof(t_ast));
 	node->type = type;
-	node->argv = NULL;
-	node->redirs = NULL;
-	node->left = NULL;
-	node->right = NULL;
-	node->child = NULL;
 	return (node);
 }
 

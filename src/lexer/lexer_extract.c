@@ -6,7 +6,7 @@
 /*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:53:06 by sberete           #+#    #+#             */
-/*   Updated: 2025/08/25 21:53:07 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/01 19:43:42 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,7 +53,7 @@ char	*extract_quoted(t_data *data, int *i)
 		(*i)++;
 	if (!data->line[*i])
 	{
-		print_syntax_error("unslosed quote");
+		print_syntax_error("unclosed quote");
 		return (NULL);
 	}
 	token = ft_substr(data->line, start, *i - start);
@@ -71,18 +71,25 @@ void	skip_spaces(t_data *data, int *i)
 
 char	*append_token_part(char *token, char *part)
 {
-	char	*tmp;
+	char *joined;
 
 	if (!part)
 		return (token);
 	if (token)
 	{
-		tmp = token;
-		token = ft_strjoin(token, part);
-		free(tmp);
+		joined = ft_strjoin(token, part);
+		if (!joined)
+		{
+			free(token);
+			free(part);
+			return (NULL); // <<< propage l’erreur au dessus
+		}
+		free(token);
+		free(part);
+		return (joined);
 	}
-	else
-		token = ft_strdup(part);
+	// pas encore de token: dupliquer part
+	joined = ft_strdup(part);
 	free(part);
-	return (token);
+	return (joined); // peut être NULL si strdup échoue
 }

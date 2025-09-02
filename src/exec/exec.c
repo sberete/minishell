@@ -6,95 +6,12 @@
 /*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:59:32 by sberete           #+#    #+#             */
-/*   Updated: 2025/08/25 22:04:02 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/02 20:07:58 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-/* Récupère la variable PATH et la split en tableau */
-char	**get_env_path(char **env)
-{
-	int		i;
-	char	*path_var;
-
-	i = 0;
-	path_var = NULL;
-	while (env && env[i])
-	{
-		if (ft_strncmp(env[i], "PATH=", 5) == 0)
-		{
-			path_var = env[i] + 5;
-			break ;
-		}
-		i++;
-	}
-	if (!path_var)
-		return (NULL);
-	return (ft_split(path_var, ':'));
-}
-
-/* Résout le chemin complet d'une commande */
-char	*resolve_path(char *cmd, char **env)
-{
-	char	**paths;
-	char	*full;
-	int		i;
-
-	if (!cmd)
-		return (NULL);
-	if (ft_strchr(cmd, '/'))
-		return ((access(cmd, X_OK) == 0) ? ft_strdup(cmd) : NULL);
-	paths = get_env_path(env);
-	i = 0;
-	while (paths && paths[i])
-	{
-		full = ft_pathjoin(paths[i], cmd);
-		if (access(full, X_OK) == 0)
-		{
-			free_tab(paths);
-			return (full);
-		}
-		free(full);
-		i++;
-	}
-	free_tab(paths);
-	return (NULL);
-}
-
-/* Applique les redirections d'un nœud */
-void	apply_redirs(t_redir *redirs)
-{
-	int	fd;
-
-	while (redirs)
-	{
-		if (redirs->type == REDIR_IN)
-			fd = open(redirs->filename, O_RDONLY);
-		else if (redirs->type == REDIR_OUT)
-			fd = open(redirs->filename, O_WRONLY | O_CREAT | O_TRUNC, 0644);
-		else if (redirs->type == REDIR_APPEND)
-			fd = open(redirs->filename, O_WRONLY | O_CREAT | O_APPEND, 0644);
-		if (fd < 0)
-		{
-			perror(redirs->filename);
-			exit(1);
-		}
-		else
-		{
-			printf("[DEBUG] %s ouvert avec fd=%d (type=%d)\n", redirs->filename,
-				fd, redirs->type);
-		}
-		if (redirs->type == REDIR_IN || redirs->type == REDIR_HEREDOC)
-			dup2(fd, STDIN_FILENO);
-		else
-			dup2(fd, STDOUT_FILENO);
-		close(fd);
-		redirs = redirs->next;
-	}
-}
-
-/* Initialise la structure d'exécution */
 void	init_exec(t_exec *exec, t_ast *node, int prev_fd, t_data *data)
 {
 	exec->prev_read = prev_fd;
@@ -107,7 +24,6 @@ void	init_exec(t_exec *exec, t_ast *node, int prev_fd, t_data *data)
 	exec->data = data;
 }
 
-/* Exécute une commande simple et renvoie son pid */
 pid_t	exec_command(t_exec *exec, int is_last)
 {
 	pid_t	pid;
@@ -157,7 +73,6 @@ pid_t	exec_command(t_exec *exec, int is_last)
 	return (pid);
 }
 
-/* Exécute une séquence de pipes */
 int	exec_pipe(t_ast *node, t_data *data)
 {
 	t_exec	exec;
@@ -201,14 +116,12 @@ int	exec_pipe(t_ast *node, t_data *data)
 		exec.pids = pids;
 		pids[i++] = exec_command(&exec, 1);
 	}
-	/* Attendre tous les fils */
 	for (int j = 0; j < i; j++)
 		waitpid(pids[j], &status, 0);
 	free(pids);
 	return (WEXITSTATUS(status));
 }
 
-/* Exécute l'AST selon le type de nœud */
 int	exec_ast(t_ast *node, t_data *data)
 {
 	t_exec	exec;

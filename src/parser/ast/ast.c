@@ -6,17 +6,11 @@
 /*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:52:08 by sberete           #+#    #+#             */
-/*   Updated: 2025/08/25 21:55:42 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/01 19:47:15 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
-
-t_ast		*parse_sequence(t_token **tokens);
-t_ast		*parse_and_or(t_token **tokens);
-t_ast		*parse_pipeline(t_token **tokens);
-t_ast		*parse_command(t_token **tokens);
-t_ast		*parse_group(t_token **tokens);
 
 static int	count_cmd_args(t_token *tok)
 {
@@ -24,14 +18,15 @@ static int	count_cmd_args(t_token *tok)
 
 	count = 0;
 	while (tok && tok->type != T_AND && tok->type != T_OR && tok->type != T_PIPE
-		&& tok->type != T_SEPARATOR && tok->type != T_PAREN_CLOSE)
+		&& tok->type != T_SEPARATOR && tok->type != T_PAREN_CLOSE
+		&& tok->type != T_END)
 	{
 		if (tok->type == T_WORD)
 			count++;
 		else if (tok->type == T_REDIR_IN || tok->type == T_REDIR_OUT
 			|| tok->type == T_APPEND || tok->type == T_HEREDOC)
 		{
-			tok = tok->next;                // skip operator
+			tok = tok->next;                // skip opérateur
 			if (tok && tok->type == T_WORD) // skip filename
 				tok = tok->next;
 			continue ;
@@ -41,26 +36,65 @@ static int	count_cmd_args(t_token *tok)
 	return (count);
 }
 
-t_ast	*parse_sequence(t_token **tokens)
+t_ast	*parse_command(t_token **tokens)
 {
-	t_ast	*left;
 	t_token	*tok;
-	t_ast	*right;
-	t_ast	*seq_node;
+	t_ast	*node;
+	int		argc;
+	t_token	*cur;
+	int		i;
+	t_token	*next;
 
-	left = parse_and_or(tokens);
 	tok = *tokens;
-	while (tok && tok->type == T_SEPARATOR) // ";"
+	node = new_ast_node(NODE_CMD);
+	argc = 0;
+	if (!node)
+		return (NULL);
+	// 1) Compter args en sautant redirs
+	cur = tok;
+	while (cur && cur->type != T_PIPE && cur->type != T_AND && cur->type != T_OR
+		&& cur->type != T_SEPARATOR && cur->type != T_PAREN_CLOSE)
 	{
-		*tokens = tok->next;
-		right = parse_and_or(tokens);
-		seq_node = new_ast_node(NODE_SEQ);
-		seq_node->left = left;
-		seq_node->right = right;
-		left = seq_node;
-		tok = *tokens;
+		if (cur->type == T_REDIR_IN || cur->type == T_REDIR_OUT
+			|| cur->type == T_APPEND || cur->type == T_HEREDOC)
+		{
+			if (!cur->next || cur->next->type != T_WORD)
+				return (free_ast(node), NULL); // "redir sans fichier"
+			cur = cur->next->next;             // skip op + filename
+			continue ;
+		}
+		if (cur->type == T_WORD)
+			argc++;
+		cur = cur->next;
 	}
-	return (left);
+	node->argv = (char **)malloc(sizeof(char *) * (argc + 1));
+	if (!node->argv)
+		return (free(node), NULL);
+	// 2) Remplir argv & redirs
+	i = 0;
+	while (tok && tok != cur)
+	{
+		if (tok->type == T_REDIR_IN || tok->type == T_REDIR_OUT
+			|| tok->type == T_APPEND || tok->type == T_HEREDOC)
+		{
+			next = parse_redirection(node, tok);
+			if (next == tok) // <- parse_redirection a signalé une erreur
+				return (free_ast(node), NULL);
+			tok = next;
+			continue ;
+		}
+		if (tok->type == T_WORD)
+			node->argv[i++] = ft_strdup(tok->value);
+		tok = tok->next;
+	}
+	node->argv[i] = NULL;
+	*tokens = cur;
+	if (i == 0)
+	{
+		free_ast(node);
+		return (NULL);
+	} // pas de commande réelle
+	return (node);
 }
 
 t_ast	*parse_group(t_token **tokens)
@@ -81,48 +115,6 @@ t_ast	*parse_group(t_token **tokens)
 	group = new_ast_node(NODE_GROUP);
 	group->child = child;
 	return (group);
-}
-
-t_ast	*parse_command(t_token **tokens)
-{
-	t_ast	*cmd;
-	t_token	*tok;
-	int		argc;
-	char	**argv;
-	int		i;
-
-	cmd = new_ast_node(NODE_CMD);
-	tok = *tokens;
-	argc = count_cmd_args(tok);
-	argv = malloc(sizeof(char *) * (argc + 1));
-	i = 0;
-	if (!argv)
-		return (NULL);
-	while (tok && tok->type != T_AND && tok->type != T_OR && tok->type != T_PIPE
-		&& tok->type != T_SEPARATOR && tok->type != T_PAREN_CLOSE)
-	{
-		if (tok->type == T_WORD)
-		{
-			argv[i++] = ft_strdup(tok->value);
-			tok = tok->next;
-		}
-		else if (tok->type == T_REDIR_IN || tok->type == T_REDIR_OUT
-			|| tok->type == T_APPEND || tok->type == T_HEREDOC)
-		{
-			tok = parse_redirection(cmd, tok);
-			if (!tok)
-			{
-				free_tab(argv);
-				return (NULL);
-			}
-		}
-		else
-			tok = tok->next;
-	}
-	argv[i] = NULL;
-	cmd->argv = argv;
-	*tokens = tok;
-	return (cmd);
 }
 
 t_ast	*parse_pipeline(t_token **tokens)
@@ -166,6 +158,28 @@ t_ast	*parse_and_or(t_token **tokens)
 		node->left = left;
 		node->right = right;
 		left = node;
+		tok = *tokens;
+	}
+	return (left);
+}
+
+t_ast	*parse_sequence(t_token **tokens)
+{
+	t_ast	*left;
+	t_token	*tok;
+	t_ast	*right;
+	t_ast	*seq_node;
+
+	left = parse_and_or(tokens);
+	tok = *tokens;
+	while (tok && tok->type == T_SEPARATOR) // ";"
+	{
+		*tokens = tok->next;
+		right = parse_and_or(tokens);
+		seq_node = new_ast_node(NODE_SEQ);
+		seq_node->left = left;
+		seq_node->right = right;
+		left = seq_node;
 		tok = *tokens;
 	}
 	return (left);

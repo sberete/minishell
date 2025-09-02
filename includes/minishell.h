@@ -6,7 +6,7 @@
 /*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:46:06 by sberete           #+#    #+#             */
-/*   Updated: 2025/08/25 21:46:21 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/02 20:02:39 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,7 @@
 # include <sys/types.h>
 # include <sys/wait.h>
 # include <unistd.h>
+# include <signal.h>
 
 typedef enum e_token_type
 {
@@ -49,6 +50,7 @@ typedef struct s_token
 {
 	char			*value;
 	t_token_type	type;
+	int				to_expand;
 	struct s_token	*next;
 }					t_token;
 
@@ -74,6 +76,7 @@ typedef struct s_redir
 {
 	t_redir_type	type;
 	char *filename;       // Nom du fichier ou limiter
+	int 	fd;
 	struct s_redir *next; // Permet plusieurs redirections
 }					t_redir;
 
@@ -106,7 +109,6 @@ typedef struct s_data
 	t_exec *exec;    // Exec
 	char **env;      // Copie de l'environnement
 	int last_exit;   // Code de sortie de la dernière commande
-	bool running;    // Booléen pour savoir si on continue la boucle
 }					t_data;
 
 /* Tokens */

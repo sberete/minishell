@@ -74,7 +74,7 @@ static int	write_line_nl(int fd, const char *s)
 
 	if (!s)
 		return (0);
-	len = ms_strlen(s);
+	len = ft_strlen(s);
 	w = write(fd, s, len);
 	if (w < 0 || (size_t)w != len)
 		return (-1);

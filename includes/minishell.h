@@ -6,7 +6,7 @@
 /*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:46:06 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/02 20:02:39 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/03 19:59:10 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,7 @@
 # include <fcntl.h>
 # include <readline/history.h>
 # include <readline/readline.h>
+# include <signal.h>
 # include <stdbool.h>
 # include <stdio.h>
 # include <stdlib.h>
@@ -26,7 +27,6 @@
 # include <sys/types.h>
 # include <sys/wait.h>
 # include <unistd.h>
-# include <signal.h>
 
 typedef enum e_token_type
 {
@@ -75,8 +75,8 @@ typedef enum e_redir_type
 typedef struct s_redir
 {
 	t_redir_type	type;
-	char *filename;       // Nom du fichier ou limiter
-	int 	fd;
+	char *filename; // Nom du fichier ou limiter
+	int				fd;
 	struct s_redir *next; // Permet plusieurs redirections
 }					t_redir;
 
@@ -140,5 +140,7 @@ t_ast				*parse_sequence(t_token **tokens);
 void				print_ast(t_ast *node, int depth);
 t_token				*parse_redirection(t_ast *cmd, t_token *tok);
 int					exec_ast(t_ast *node, t_data *data);
-
+void	apply_redirs(t_redir *redirs);
+char	**get_env_path(char **env);
+char	*resolve_path(char *cmd, char **env);
 #endif

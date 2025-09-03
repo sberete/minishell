@@ -6,35 +6,35 @@
 /*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:52:08 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/01 19:47:15 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/03 20:01:59 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-static int	count_cmd_args(t_token *tok)
-{
-	int	count;
+// static int	count_cmd_args(t_token *tok)
+// {
+// 	int	count;
 
-	count = 0;
-	while (tok && tok->type != T_AND && tok->type != T_OR && tok->type != T_PIPE
-		&& tok->type != T_SEPARATOR && tok->type != T_PAREN_CLOSE
-		&& tok->type != T_END)
-	{
-		if (tok->type == T_WORD)
-			count++;
-		else if (tok->type == T_REDIR_IN || tok->type == T_REDIR_OUT
-			|| tok->type == T_APPEND || tok->type == T_HEREDOC)
-		{
-			tok = tok->next;                // skip opérateur
-			if (tok && tok->type == T_WORD) // skip filename
-				tok = tok->next;
-			continue ;
-		}
-		tok = tok->next;
-	}
-	return (count);
-}
+// 	count = 0;
+// 	while (tok && tok->type != T_AND && tok->type != T_OR && tok->type != T_PIPE
+// 		&& tok->type != T_SEPARATOR && tok->type != T_PAREN_CLOSE
+// 		&& tok->type != T_END)
+// 	{
+// 		if (tok->type == T_WORD)
+// 			count++;
+// 		else if (tok->type == T_REDIR_IN || tok->type == T_REDIR_OUT
+// 			|| tok->type == T_APPEND || tok->type == T_HEREDOC)
+// 		{
+// 			tok = tok->next;                // skip opérateur
+// 			if (tok && tok->type == T_WORD) // skip filename
+// 				tok = tok->next;
+// 			continue ;
+// 		}
+// 		tok = tok->next;
+// 	}
+// 	return (count);
+// }
 
 t_ast	*parse_command(t_token **tokens)
 {

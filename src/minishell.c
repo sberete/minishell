@@ -6,7 +6,7 @@
 /*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/05 19:53:11 by sberete           #+#    #+#             */
-/*   Updated: 2025/08/25 21:54:49 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/03 20:15:07 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,7 +49,6 @@ int	main(int argc, char **argv, char **env)
 				print_ast(data.ast, 1);
 				exec_ast(data.ast, &data);
 			}
-			// print_ast(data.ast, 0); // <- Debug, afficher l’arbre
 			else
 				printf("Erreur: parsing\n");
 		}
@@ -59,7 +58,6 @@ int	main(int argc, char **argv, char **env)
 			free_data(&data);
 			continue ;
 		}
-		// print_tokens(data.tokens);
 		free_data(&data);
 	}
 }

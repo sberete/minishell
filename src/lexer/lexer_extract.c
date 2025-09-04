@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   lexer_extract.c                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:53:06 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/03 22:45:21 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/05 00:50:47 by sxrimu           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,67 +29,37 @@ char	*extract_operator(t_data *data, int *i)
 	return (NULL);
 }
 
-char	*extract_simple(t_data *data, int *i)
+char	*extract_word(t_data *data, int *i)
 {
-	int	start;
-
-	start = *i;
-	while (data->line[*i] && data->line[*i] != ' '
-		&& !is_operator_start(data->line[*i]) && data->line[*i] != '\''
-		&& data->line[*i] != '"')
-		(*i)++;
-	return (ft_substr(data->line, start, *i - start));
-}
-
-char	*extract_quoted(t_data *data, int *i)
-{
-	char	quote;
+	int		in_s = 0, in_d = 0;
 	int		start;
 	char	*token;
 
-	quote = data->line[*i];
-	start = ++(*i); // skip quote opening
-	while (data->line[*i] && data->line[*i] != quote)
+	start = *i;
+	while (data->line[*i])
+	{
+		char c = data->line[*i];
+		if (!in_s && !in_d && (c == ' ' || is_operator_start(c)))
+			break;
+		if (c == '\'' && !in_d)
+			in_s = !in_s;
+		else if (c == '"' && !in_s)
+			in_d = !in_d;
 		(*i)++;
-	if (!data->line[*i])
+	}
+	if (in_s || in_d)
 	{
 		print_syntax_error("unclosed quote");
 		return (NULL);
 	}
-	token = ft_substr(data->line, start, *i - start);
-	if (!token)
-		return (NULL);
-	(*i)++; // skip quote closing
+	token = ft_substr(data->line, start, *i - start); // inclut tout, quotes comprises
 	return (token);
 }
+
+
 
 void	skip_spaces(t_data *data, int *i)
 {
 	while (data->line[*i] == ' ')
 		(*i)++;
-}
-
-char	*append_token_part(char *token, char *part)
-{
-	char *joined;
-
-	if (!part)
-		return (token);
-	if (token)
-	{
-		joined = ft_strjoin(token, part);
-		if (!joined)
-		{
-			free(token);
-			free(part);
-			return (NULL); // <<< propage l’erreur au dessus
-		}
-		free(token);
-		free(part);
-		return (joined);
-	}
-	// pas encore de token: dupliquer part
-	joined = ft_strdup(part);
-	free(part);
-	return (joined); // peut être NULL si strdup échoue
 }

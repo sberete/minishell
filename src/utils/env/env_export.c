@@ -69,17 +69,46 @@ static void	push_kv(t_env **lst, const char *kv)
 	free(k);
 	free(v);
 }
+void    env_inc_shlvl(t_env **lst)
+{
+    long    lvl;
+    char    *cur;
+    char    *new_val;
 
-t_env	*env_from_environ(char **environ)
+    cur = ms_getenv(*lst, "SHLVL");
+    if (!cur)
+    {
+        ms_setenv(lst, "SHLVL", "1", 1);
+        return;
+    }
+    lvl = ft_atoi(cur);
+    if (lvl < 0)
+        lvl = 0;
+    if (lvl > 1000)
+        lvl = 0;
+    lvl += 1;
+
+    // Utilise ft_itoa (ou équivalent) au lieu de snprintf
+    new_val = ft_itoa(lvl);
+    if (!new_val)
+    {
+        perror("ft_itoa");
+        exit(1);
+    }
+    ms_setenv(lst, "SHLVL", new_val, 1);
+    free(new_val);
+}
+
+
+t_env	*env_from_environ(char **env)
 {
 	t_env *lst = NULL;
 	size_t i;
 
-	if (!environ)
+	if (!env)
 		return (NULL);
-	for (i = 0; environ[i]; ++i)
-		push_kv(&lst, environ[i]);
-	// SHLVL++ pour notre shell
+	for (i = 0; env[i]; ++i)
+		push_kv(&lst, env[i]);
 	env_inc_shlvl(&lst);
 	return (lst);
 }

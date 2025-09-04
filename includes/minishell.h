@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   minishell.h                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:46:06 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/04 20:58:13 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/05 00:45:21 by sxrimu           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,11 @@
 # include <sys/types.h>
 # include <sys/wait.h>
 # include <unistd.h>
+
+// +++ AJOUT +++
+#define TOEXP_AUTO   -1   // pas de consigne : l'expander décidera (mot mixte / sans quotes)
+#define TOEXP_SQUOTE  1   // tout le mot est en quotes simples → ne pas expand
+#define TOEXP_DQUOTE  2   // tout le mot est en quotes doubles → expand autorisé
 
 typedef enum e_token_type
 {
@@ -124,11 +129,10 @@ bool				add_token_back(t_token **head, t_token *new);
 t_token_type		get_token_type(const char *str);
 int					is_operator_start(char c);
 int					get_operator_len(const char *str);
+char	*extract_word(t_data *data, int *i);
 int					tokenize_line(t_data *data);
 char				*extract_token(t_data *data, int *i);
 char				*extract_operator(t_data *data, int *i);
-char				*extract_simple(t_data *data, int *i);
-char				*extract_quoted(t_data *data, int *i);
 void				skip_spaces(t_data *data, int *i);
 char				*append_token_part(char *token, char *part);
 
@@ -151,5 +155,32 @@ void				apply_redirs(t_redir *redirs);
 char				**get_env_path(char **env);
 char				*resolve_path(char *cmd, char **env);
 t_env	*env_from_environ(char **environ);
+t_data	data_init(int argc, char **argv, char **env);
+int	id_is_valid(const char *s);
+
+
+int	split_key_value(const char *s, char **k, char **v);
+
+int	split_key_append(const char *s, char **k, char **v, int *is_append);
+
+char	*ms_getenv(t_env *lst, const char *key);
+
+
+int	ms_setenv(t_env **lst, const char *key, const char *value, int overwrite);
+
+
+int	ms_setenv_eq(t_env **lst, const char *assign);
+
+int	ms_setenv_append(t_env **lst, const char *assign);
+t_env *env_new(const char *key, const char *value);
+void env_add_back(t_env **lst, t_env *node);
+size_t env_size(t_env *lst);
+
+t_env *env_find(t_env *lst, const char *key);
+
+
+
+int env_remove(t_env **lst, const char *key);
+void	env_clear(t_env **lst);
 
 #endif

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   minishell.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/05 19:53:11 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/03 20:15:07 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/05 00:48:20 by sxrimu           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,24 +33,21 @@ int	main(int argc, char **argv, char **env)
 {
 	t_data	data;
 
-	(void)argc;
-	(void)argv;
-	memset(&data, 0, sizeof(t_data));
-	data.env = env;
+	data = data_init(argc, argv, env);
 	while (1)
 	{
 		data.line = read_input(&data);
 		if (tokenize_line(&data) == 0)
 		{
 			print_tokens(data.tokens);
-			data.ast = parse_sequence(&data.tokens); // <- Appel du parseur
-			if (data.ast)
-			{
-				print_ast(data.ast, 1);
-				exec_ast(data.ast, &data);
-			}
-			else
-				printf("Erreur: parsing\n");
+			// data.ast = parse_sequence(&data.tokens); // <- Appel du parseur
+			// if (data.ast)
+			// {
+			// 	print_ast(data.ast, 1);
+			// 	exec_ast(data.ast, &data);
+			// }
+			// else
+			// 	printf("Erreur: parsing\n");
 		}
 		else
 		{
@@ -61,6 +58,9 @@ int	main(int argc, char **argv, char **env)
 		free_data(&data);
 	}
 }
+
+
+
 
 /*
 Flag pour supprimer les leaks de readline

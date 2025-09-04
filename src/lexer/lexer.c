@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   lexer.c                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:52:23 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/01 19:44:30 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/05 00:48:00 by sxrimu           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,31 +14,48 @@
 
 char	*extract_token(t_data *data, int *i)
 {
-	char	*token;
-	char	*part;
+	int		in_s;
+	int		in_d;
+	int		start;
+	char	*op;
 
-	token = NULL;
-	part = NULL;
 	skip_spaces(data, i);
 	if (!data->line[*i])
 		return (NULL);
-	part = extract_operator(data, i);
-	if (part)
-		return (part);
-	while (data->line[*i] && data->line[*i] != ' '
-		&& !is_operator_start(data->line[*i]))
+
+	/* opérateur ? */
+	op = extract_operator(data, i);
+	if (op)
+		return (op);
+
+	/* mot complet avec quotes conservées */
+	in_s = 0;
+	in_d = 0;
+	start = *i;
+	while (data->line[*i])
 	{
-		if (data->line[*i] == '\'' || data->line[*i] == '"')
-			part = extract_quoted(data, i);
-		else
-			part = extract_simple(data, i);
-		if (!part)
-			return (free(token), NULL);
-		token = append_token_part(token, part);
-		if (!token) // échec join/dup
-			return (NULL);
+		char c = data->line[*i];
+
+		/* si on n'est pas dans des quotes, fin du mot sur blanc ou opérateur */
+		if (!in_s && !in_d)
+		{
+			if (c == ' ' || is_operator_start(c))
+				break ;
+		}
+		/* toggle quotes (et on avance) */
+		if (c == '\'' && !in_d)
+			in_s = !in_s;
+		else if (c == '\"' && !in_s)
+			in_d = !in_d;
+		(*i)++;
 	}
-	return (token);
+	if (in_s || in_d)
+	{
+		print_syntax_error("unclosed quote");
+		return (NULL);
+	}
+	/* duplique tel quel, quotes incluses */
+	return (ft_substr(data->line, start, *i - start));
 }
 
 int	tokenize_line(t_data *data)
@@ -47,21 +64,20 @@ int	tokenize_line(t_data *data)
 	char	*value;
 	t_token	*new;
 	t_token	*tail;
+	t_token	*head;
 
 	i = 0;
-	t_token *head = NULL; // <<< liste locale
+	head = NULL;
 	tail = NULL;
-	data->tokens = NULL; // <<< on assigne à la fin seulement si succès
+	data->tokens = NULL;
 	while (data->line[i])
 	{
 		value = extract_token(data, &i);
-		// fin de ligne après espaces
+		/* fin de ligne après espaces */
 		if (!value)
 		{
-			// si on est vraiment à la fin -> OK (pas une erreur)
 			if (!data->line[i])
 				break ;
-			// sinon, erreur d'extraction -> free la liste partielle
 			free_token_list(&head);
 			return (1);
 		}
@@ -73,18 +89,16 @@ int	tokenize_line(t_data *data)
 		new = new_token_node(value);
 		if (!new)
 		{
-			// new_token_node a déjà free(value) en cas d'échec
+			/* new_token_node a déjà free(value) en cas d'échec */
 			free_token_list(&head);
 			return (1);
 		}
-		// chainage local
 		if (!head)
 			head = new;
 		else
 			tail->next = new;
 		tail = new;
 	}
-	// succès: on publie la liste
 	data->tokens = head;
 	return (0);
 }

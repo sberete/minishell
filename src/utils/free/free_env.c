@@ -1,55 +1,39 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   free_env.c                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/09/04 17:05:12 by sberete           #+#    #+#             */
+/*   Updated: 2025/09/04 17:06:05 by sberete          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "minishell.h"
 
-static t_env *env_find_prev(t_env *lst, const char *key)
+static void	env_free_one(t_env *n)
 {
-t_env *prev = NULL;
-while (lst)
-{
-if (ft_strcmp(lst->key, key) == 0)
-return prev; // prev == NULL si premier élément
-prev = lst;
-lst = lst->next;
-}
-return NULL; // non trouvé
+	if (!n)
+		return ;
+	free(n->key);
+	free(n->value);
+	free(n);
 }
 
-
-t_env *env_find(t_env *lst, const char *key)
+void	env_clear(t_env **lst)
 {
-while (lst)
-{
-if (ft_strcmp(lst->key, key) == 0)
-return lst;
-lst = lst->next;
-}
-return NULL;
-}
+	t_env	*n;
+	t_env	*tmp;
 
-
-int env_remove(t_env **lst, const char *key)
-{
-t_env *prev;
-t_env *cur;
-
-
-if (!lst || !*lst || !key)
-return -1;
-if (ft_strcmp((*lst)->key, key) == 0)
-{
-cur = *lst;
-*lst = cur->next;
-free(cur->key);
-free(cur->value);
-free(cur);
-return 0;
-}
-prev = env_find_prev(*lst, key);
-if (!prev || !prev->next)
-return -1;
-cur = prev->next;
-prev->next = cur->next;
-free(cur->key);
-free(cur->value);
-free(cur);
-return 0;
+	if (!lst || !*lst)
+		return ;
+	n = *lst;
+	while (n)
+	{
+		tmp = n->next;
+		env_free_one(n);
+		n = tmp;
+	}
+	*lst = NULL;
 }

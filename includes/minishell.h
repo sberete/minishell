@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   minishell.h                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:46:06 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/04 13:37:05 by sxrimu           ###   ########.fr       */
+/*   Updated: 2025/09/04 20:58:13 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -103,10 +103,10 @@ typedef struct s_exec
 
 typedef struct s_env
 {
-char *key; // ex: "PATH"
-char *value; // ex: "/usr/bin:/bin"
-struct s_env *next;
-} t_env;
+	char *key;   // ex: "PATH"
+	char *value; // ex: "/usr/bin:/bin"
+	struct s_env	*next;
+}					t_env;
 
 typedef struct s_data
 {
@@ -147,7 +147,9 @@ t_ast				*parse_sequence(t_token **tokens);
 void				print_ast(t_ast *node, int depth);
 t_token				*parse_redirection(t_ast *cmd, t_token *tok);
 int					exec_ast(t_ast *node, t_data *data);
-void	apply_redirs(t_redir *redirs);
-char	**get_env_path(char **env);
-char	*resolve_path(char *cmd, char **env);
+void				apply_redirs(t_redir *redirs);
+char				**get_env_path(char **env);
+char				*resolve_path(char *cmd, char **env);
+t_env	*env_from_environ(char **environ);
+
 #endif

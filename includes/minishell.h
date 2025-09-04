@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   minishell.h                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:46:06 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/03 19:59:10 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/04 13:37:05 by sxrimu           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -101,13 +101,20 @@ typedef struct s_exec
 	struct s_data	*data;
 }					t_exec;
 
+typedef struct s_env
+{
+char *key; // ex: "PATH"
+char *value; // ex: "/usr/bin:/bin"
+struct s_env *next;
+} t_env;
+
 typedef struct s_data
 {
 	char *line;      // Readline
 	t_token *tokens; // Tokenisation
 	t_ast *ast;      // AST
 	t_exec *exec;    // Exec
-	char **env;      // Copie de l'environnement
+	t_env *env;      // Copie de l'environnement
 	int last_exit;   // Code de sortie de la dernière commande
 }					t_data;
 

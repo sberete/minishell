@@ -106,7 +106,7 @@ int	ms_setenv(t_env **lst, const char *key, const char *value, int overwrite)
 		perror("strdup");
 		exit(1);
 	}
-	return 0;
+	return (0);
 }
 
 int	ms_setenv_eq(t_env **lst, const char *assign)
@@ -115,43 +115,50 @@ int	ms_setenv_eq(t_env **lst, const char *assign)
 	char	*v;
 
 	if (split_key_value(assign, &k, &v) < 0)
-		return -1;
+		return (-1);
 	if (!id_is_valid(k))
 	{
 		free(k);
 		free(v);
-		return -1;
+		return (-1);
 	}
 	ms_setenv(lst, k, v, 1);
 	free(k);
 	free(v);
-	return 0;
+	return (0);
 }
 
-int ms_setenv_append(t_env **lst, const char *assign)
+int	ms_setenv_append(t_env **lst, const char *assign)
 {
-    char *k;
-    char *v;
-    int is_append;
-    t_env *n;
+	char	*k;
+	char	*v;
+	int		is_append;
+	t_env	*n;
+	char	*joined;
 
-    if (split_key_append(assign, &k, &v, &is_append) < 0 || !is_append)
-        return -1;
-    if (!id_is_valid(k))
-    {
-        free(k); free(v);
-        return -1;
-    }
-    n = env_find(*lst, k);
-    if (!n)
-        env_add_back(lst, env_new(k, v));
-    else
-    {
-        char *joined = ft_strjoin(n->value, v);
-        if (!joined) { perror("strjoin"); exit(1); }
-        free(n->value);
-        n->value = joined;
-    }
-    free(k); free(v);
-    return 0;
+	if (split_key_append(assign, &k, &v, &is_append) < 0 || !is_append)
+		return (-1);
+	if (!id_is_valid(k))
+	{
+		free(k);
+		free(v);
+		return (-1);
+	}
+	n = env_find(*lst, k);
+	if (!n)
+		env_add_back(lst, env_new(k, v));
+	else
+	{
+		joined = ft_strjoin(n->value, v);
+		if (!joined)
+		{
+			perror("strjoin");
+			exit(1);
+		}
+		free(n->value);
+		n->value = joined;
+	}
+	free(k);
+	free(v);
+	return (0);
 }

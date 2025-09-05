@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   print_tokens.c                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:50:16 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/05 00:52:14 by sxrimu           ###   ########.fr       */
+/*   Updated: 2025/09/05 19:25:20 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,4 +27,3 @@ void	print_tokens(t_token *tokens)
 		tmp = tmp->next;
 	}
 }
-

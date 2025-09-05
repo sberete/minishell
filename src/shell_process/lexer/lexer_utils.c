@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   lexer_utils.c                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:52:29 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/05 00:46:10 by sxrimu           ###   ########.fr       */
+/*   Updated: 2025/09/05 19:22:36 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,8 +15,8 @@
 t_token	*new_token_node(char *value)
 {
 	t_token	*token;
-	size_t len;
-	
+	size_t	len;
+
 	token = malloc(sizeof(t_token));
 	if (!token)
 	{
@@ -30,11 +30,13 @@ t_token	*new_token_node(char *value)
 	if (token->type == T_WORD && token->value)
 	{
 		len = ft_strlen(token->value);
-		if (len >= 2 && token->value[0] == '\'' && token->value[len - 1] == '\'')
+		if (len >= 2 && token->value[0] == '\'' && token->value[len
+			- 1] == '\'')
 			token->to_expand = TOEXP_SQUOTE; // tout le mot est '...'
-		else if (len >= 2 && token->value[0] == '\"' && token->value[len - 1] == '\"')
+		else if (len >= 2 && token->value[0] == '\"' && token->value[len
+			- 1] == '\"')
 			token->to_expand = TOEXP_DQUOTE; // tout le mot est "..."
-		// sinon, laisse à AUTO
+												// sinon, laisse à AUTO
 	}
 	return (token);
 }
@@ -55,6 +57,12 @@ bool	add_token_back(t_token **head, t_token *new)
 		tmp = tmp->next;
 	tmp->next = new;
 	return (true);
+}
+
+void	skip_spaces(t_data *data, int *i)
+{
+	while (data->line[*i] == ' ')
+		(*i)++;
 }
 
 t_token_type	get_token_type(const char *str)

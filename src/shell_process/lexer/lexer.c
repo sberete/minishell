@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   lexer.c                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:52:23 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/05 00:48:00 by sxrimu           ###   ########.fr       */
+/*   Updated: 2025/09/05 19:23:39 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,24 +18,22 @@ char	*extract_token(t_data *data, int *i)
 	int		in_d;
 	int		start;
 	char	*op;
+	char	c;
 
 	skip_spaces(data, i);
 	if (!data->line[*i])
 		return (NULL);
-
 	/* opérateur ? */
 	op = extract_operator(data, i);
 	if (op)
 		return (op);
-
 	/* mot complet avec quotes conservées */
 	in_s = 0;
 	in_d = 0;
 	start = *i;
 	while (data->line[*i])
 	{
-		char c = data->line[*i];
-
+		c = data->line[*i];
 		/* si on n'est pas dans des quotes, fin du mot sur blanc ou opérateur */
 		if (!in_s && !in_d)
 		{

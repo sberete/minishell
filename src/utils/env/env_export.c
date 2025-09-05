@@ -6,7 +6,7 @@ char	**env_to_environ(t_env *lst)
 	size_t	n;
 	char	**tab;
 	size_t	i;
-	char *kv;
+	char	*kv;
 	size_t	len;
 
 	n = env_size(lst);
@@ -69,36 +69,34 @@ static void	push_kv(t_env **lst, const char *kv)
 	free(k);
 	free(v);
 }
-void    env_inc_shlvl(t_env **lst)
+void	env_inc_shlvl(t_env **lst)
 {
-    long    lvl;
-    char    *cur;
-    char    *new_val;
+	long	lvl;
+	char	*cur;
+	char	*new_val;
 
-    cur = ms_getenv(*lst, "SHLVL");
-    if (!cur)
-    {
-        ms_setenv(lst, "SHLVL", "1", 1);
-        return;
-    }
-    lvl = ft_atoi(cur);
-    if (lvl < 0)
-        lvl = 0;
-    if (lvl > 1000)
-        lvl = 0;
-    lvl += 1;
-
-    // Utilise ft_itoa (ou équivalent) au lieu de snprintf
-    new_val = ft_itoa(lvl);
-    if (!new_val)
-    {
-        perror("ft_itoa");
-        exit(1);
-    }
-    ms_setenv(lst, "SHLVL", new_val, 1);
-    free(new_val);
+	cur = ms_getenv(*lst, "SHLVL");
+	if (!cur)
+	{
+		ms_setenv(lst, "SHLVL", "1", 1);
+		return ;
+	}
+	lvl = ft_atoi(cur);
+	if (lvl < 0)
+		lvl = 0;
+	if (lvl > 1000)
+		lvl = 0;
+	lvl += 1;
+	// Utilise ft_itoa (ou équivalent) au lieu de snprintf
+	new_val = ft_itoa(lvl);
+	if (!new_val)
+	{
+		perror("ft_itoa");
+		exit(1);
+	}
+	ms_setenv(lst, "SHLVL", new_val, 1);
+	free(new_val);
 }
-
 
 t_env	*env_from_environ(char **env)
 {

@@ -12,6 +12,11 @@
 
 // #include "minishell.h"
 
+// if (is_builtin(argv[0]))
+//     run_builtin(argv, data);
+// else
+//     run_external(argv, data->env);
+
 // void	init_exec(t_exec *exec, t_ast *node, int prev_fd, t_data *data)
 // {
 // 	exec->prev_read = prev_fd;

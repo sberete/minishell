@@ -1,17 +1,15 @@
 #include "minishell.h"
 
-char	*read_input(t_data *data)
+int read_input(t_data *data)
 {
-	char *line;
-    (void)data;
-	line = readline("minishell > ");
-	if (!line)
+	data->line = readline("minishell > ");
+	if (data->line == NULL)
 	{
 		printf("exit\n");
 		rl_clear_history();
-		return (NULL);
+		return (0);
 	}
-	if (*line)
-		add_history(line);
-	return (line);
+	if (data->line[0])
+		add_history(data->line); 
+	return 1;
 }

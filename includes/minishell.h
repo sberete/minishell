@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   minishell.h                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:46:06 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/05 19:55:21 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/06 16:50:33 by sxrimu           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -80,6 +80,7 @@ typedef enum e_token_type
 	{
 		t_redir_type	type;
 		char *filename; // Nom du fichier ou limiter
+		char *delim;
 		int				fd;
 		struct s_redir *next; // Permet plusieurs redirections
 	} t_redir;
@@ -156,6 +157,7 @@ typedef enum e_token_type
 	t_env *env_from_environ(char **environ);
 	t_data data_init(int argc, char **argv, char **env);
 	int id_is_valid(const char *s);
+void	free_data_tmp(t_data *data);
 
 	int split_key_value(const char *s, char **k, char **v);
 
@@ -178,6 +180,7 @@ typedef enum e_token_type
 	int env_remove(t_env **lst, const char *key);
 	void env_clear(t_env **lst);
 	int	shell_process(t_data *data);
-char	*read_input(t_data *data);
+int read_input(t_data *data);
+
 
 #endif

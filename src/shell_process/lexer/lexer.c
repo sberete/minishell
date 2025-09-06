@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   lexer.c                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:52:23 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/05 19:23:39 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/06 18:20:37 by sxrimu           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,45 +58,38 @@ char	*extract_token(t_data *data, int *i)
 
 int	tokenize_line(t_data *data)
 {
-	int		i;
+	int		i = 0;
 	char	*value;
-	t_token	*new;
-	t_token	*tail;
-	t_token	*head;
+	t_token	*tail = NULL;   // dernier maillon ajouté
 
-	i = 0;
-	head = NULL;
-	tail = NULL;
-	data->tokens = NULL;
+	data->tokens = NULL;     // on construit directement dans data->tokens
 	while (data->line[i])
 	{
 		value = extract_token(data, &i);
-		/* fin de ligne après espaces */
-		if (!value)
+		if (!value)  // erreur ou fin de ligne
 		{
 			if (!data->line[i])
-				break ;
-			free_token_list(&head);
+				break;
+			free_token_list(&data->tokens);
 			return (1);
 		}
-		if (*value == '\0')
+		if (*value == '\0')  // token vide -> ignorer
 		{
 			free(value);
-			continue ;
+			continue;
 		}
-		new = new_token_node(value);
+		t_token *new = new_token_node(value);  // prend la propriété de value
 		if (!new)
 		{
-			/* new_token_node a déjà free(value) en cas d'échec */
-			free_token_list(&head);
+			free_token_list(&data->tokens);
 			return (1);
 		}
-		if (!head)
-			head = new;
+		if (!data->tokens)      // premier élément
+			data->tokens = new;
 		else
 			tail->next = new;
-		tail = new;
+		tail = new;             // avance le tail
 	}
-	data->tokens = head;
 	return (0);
 }
+

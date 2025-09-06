@@ -3,25 +3,26 @@
 /*                                                        :::      ::::::::   */
 /*   free_tab.c                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/03 18:07:38 by sberete           #+#    #+#             */
-/*   Updated: 2025/04/14 17:07:28 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/06 16:43:46 by sxrimu           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "libft.h"
 
-void	free_tab(char **dest)
+void	free_tab(char **tab)
 {
 	int	i;
 
+	if (!tab)
+		return;
 	i = 0;
-	while (dest[i])
+	while (tab[i])
 	{
-		free(dest[i]);
+		free(tab[i]);
 		i++;
 	}
-	free(dest);
-	dest = NULL;
+	free(tab);
 }

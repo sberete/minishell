@@ -7,6 +7,17 @@ LIBFT = lib/libft/lib/libft.a
 GNL = lib/get_next_line/lib/getnextline.a
 
 LDFLAGS = -lreadline
+VALGRIND = valgrind
+
+VGFLAGS  = --leak-check=full \
+            --show-leak-kinds=all \
+            --track-origins=yes \
+            --errors-for-leak-kinds=all \
+            --track-fds=yes \
+            --num-callers=25 \
+            --exit-on-first-error=no \
+            --log-file=valgrind.log \
+			--suppressions=supp.supp
 
 SRC_DIR = src
 OBJ_DIR = objs
@@ -54,3 +65,22 @@ fclean: clean
 
 .PHONY: re
 re: fclean all
+
+
+# Arguments passés à l'exécutable: make valgrind ARGS="…"
+ARGS ?=
+
+# Pour Valgrind, recompile en debug propre (-O0), garde -g3
+VALGRIND_CFLAGS = $(filter-out -O%,$(CFLAGS)) -O0
+
+.PHONY: valgrind vg vg-clean
+valgrind: CFLAGS := $(VALGRIND_CFLAGS)
+valgrind: re
+	@$(VALGRIND) $(VGFLAGS) ./$(NAME) $(ARGS)
+	@echo "==> Report: valgrind.log"
+
+vg: valgrind
+
+vg-clean:
+	@rm -f valgrind.log
+	@echo "valgrind.log removed"

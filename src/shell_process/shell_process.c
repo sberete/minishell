@@ -1,7 +1,22 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   shell_process.c                                    :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/09/07 17:56:28 by sberete           #+#    #+#             */
+/*   Updated: 2025/09/07 17:59:52 by sberete          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "minishell.h"
 
 int	shell_process(t_data *data)
 {
+	t_token	*head;
+	t_token	*cur;
+
 	if (tokenize_line(data) != 0)
 	{
 		print_syntax_error("tokenization");
@@ -10,8 +25,8 @@ int	shell_process(t_data *data)
 		return (1);
 	}
 	print_tokens(data->tokens);
-	t_token *head = data->tokens;
-	t_token *cur  = head;
+	head = data->tokens;
+	cur = head;
 	data->ast = parse_sequence(&cur);
 	free_token_list(&head);
 	data->tokens = NULL;

@@ -3,26 +3,31 @@
 /*                                                        :::      ::::::::   */
 /*   minishell.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/05 19:53:11 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/06 16:42:47 by sxrimu           ###   ########.fr       */
+/*   Updated: 2025/09/07 18:41:51 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
+
+volatile sig_atomic_t	g_exit_status = 0;
 
 int	main(int argc, char **argv, char **env)
 {
 	t_data	data;
 
 	data = data_init(argc, argv, env);
+	signals_setup_parent();
 	while (1)
 	{
-		if (!read_input(&data))
+		data.input_status = read_input(&data);
+		sync_exit_status(&data);
+		if (!data.input_status)
 		{
 			free_data(&data);
-			break;
+			break ;
 		}
 		if (shell_process(&data) == 1)
 		{
@@ -31,6 +36,7 @@ int	main(int argc, char **argv, char **env)
 		}
 		free_data_tmp(&data);
 	}
+	return (data.last_exit);
 }
 
 /*

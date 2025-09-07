@@ -1,0 +1,23 @@
+🚦 Étapes de validation
+
+Pour dire “tout est bon”, il reste juste à tester en conditions réelles :
+
+Lancer ./minishell (pas sous Valgrind).
+
+Au prompt, taper Ctrl-C → prompt propre, $? = 130.
+
+Au prompt, taper Ctrl-\ → silence total, $? inchangé.
+
+Lancer sleep 5 :
+
+Ctrl-C → kill, affiche \n, $? = 130.
+
+Ctrl-\ → kill, affiche Quit (core dumped), $? = 131.
+
+Tester un builtin (echo ok) → $? = 0.
+
+Tester un heredoc (cat << EOF) :
+
+Taper du texte → tout passe dans cat.
+
+Ctrl-C → heredoc annulé, $? = 130.

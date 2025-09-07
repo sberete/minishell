@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   free_ast.c                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:49:42 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/06 16:48:19 by sxrimu           ###   ########.fr       */
+/*   Updated: 2025/09/07 19:46:16 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,49 +14,35 @@
 
 static void	free_redirs(t_redir *r)
 {
-	t_redir *next;
+	t_redir	*next;
 
 	while (r)
 	{
-		next = r->next;                 /* prendre next AVANT de free(r) */
-		if (r->type == REDIR_HEREDOC)
-			free(r->delim);             /* heredoc : on libère uniquement delim */
-		else
-			free(r->filename);          /* <, >, >> : on libère filename */
+		next = r->next;
+		if (r->fd >= 0)
+			close(r->fd);
+		if (r->filename)
+			free(r->filename);
+		if (r->delim)
+			free(r->delim);
 		free(r);
 		r = next;
 	}
 }
 
-void free_ast(t_ast *node)
+void	free_ast(t_ast *node)
 {
-    if (!node)
-        return;
-    if (node->argv) 
-	{
-        free_tab(node->argv);
-        node->argv = NULL;              /* <- on remet bien à NULL */
-    }
-    if (node->redirs) 
-	{
-        free_redirs(node->redirs);
-        node->redirs = NULL;            /* <- pareil pour la liste de redirs */
-    }
-    if (node->left)  
-	{ 
-		free_ast(node->left);  
-		node->left = NULL; 
-	}
-    if (node->right) 
-	{ 
-		free_ast(node->right); 
-		node->right = NULL; 
-	}
-    if (node->child) 
-	{ 
-		free_ast(node->child); 
-		node->child = NULL; 
-	}
-    free(node);
+	if (!node)
+		return ;
+	if (node->argv)
+		free_tab(node->argv);
+	if (node->redirs)
+		free_redirs(node->redirs);
+	if (node->left)
+		free_ast(node->left);
+	if (node->right)
+		free_ast(node->right);
+	if (node->child)
+		free_ast(node->child);
+	free(node);
 }
-

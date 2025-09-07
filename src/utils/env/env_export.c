@@ -1,6 +1,5 @@
 #include "minishell.h"
 
-// N.B.: pour execve, on n'exporte que key=value (clé présente même si valeur vide)
 char	**env_to_environ(t_env *lst)
 {
 	size_t	n;
@@ -35,21 +34,6 @@ char	**env_to_environ(t_env *lst)
 	}
 	tab[i] = NULL;
 	return (tab);
-}
-
-void	free_strtab(char **tab)
-{
-	size_t	i;
-
-	i = 0;
-	if (!tab)
-		return ;
-	while (tab[i])
-	{
-		free(tab[i]);
-		i++;
-	}
-	free(tab);
 }
 
 // Importer depuis char **environ
@@ -87,7 +71,6 @@ void	env_inc_shlvl(t_env **lst)
 	if (lvl > 1000)
 		lvl = 0;
 	lvl += 1;
-	// Utilise ft_itoa (ou équivalent) au lieu de snprintf
 	new_val = ft_itoa(lvl);
 	if (!new_val)
 	{
@@ -100,13 +83,18 @@ void	env_inc_shlvl(t_env **lst)
 
 t_env	*env_from_environ(char **env)
 {
-	t_env *lst = NULL;
-	size_t i;
+	t_env	*lst;
+	size_t	i;
 
+	lst = NULL;
 	if (!env)
 		return (NULL);
-	for (i = 0; env[i]; ++i)
+	i = 0;
+	while (env[i])
+	{
 		push_kv(&lst, env[i]);
+		i++;
+	}
 	env_inc_shlvl(&lst);
 	return (lst);
 }

@@ -6,7 +6,7 @@
 /*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:50:30 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/01 19:40:26 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/07 19:49:18 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,7 +37,7 @@ static void	print_redirs(t_redir *redir, int depth)
 		else if (redir->type == REDIR_APPEND)
 			printf(">> %s\n", redir->filename);
 		else if (redir->type == REDIR_HEREDOC)
-			printf("<< %s\n", redir->filename);
+			printf("<< %s\n", redir->delim);
 		redir = redir->next;
 	}
 }

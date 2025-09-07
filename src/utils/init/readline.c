@@ -1,6 +1,6 @@
 #include "minishell.h"
 
-int read_input(t_data *data)
+int	read_input(t_data *data)
 {
 	data->line = readline("minishell > ");
 	if (data->line == NULL)
@@ -10,6 +10,6 @@ int read_input(t_data *data)
 		return (0);
 	}
 	if (data->line[0])
-		add_history(data->line); 
-	return 1;
+		add_history(data->line);
+	return (1);
 }

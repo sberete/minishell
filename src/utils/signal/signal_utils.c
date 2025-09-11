@@ -3,14 +3,37 @@
 /*                                                        :::      ::::::::   */
 /*   signal_utils.c                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/07 16:50:15 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/07 17:55:33 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/10 19:45:17 by sxrimu           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
+
+// int	set_sigaction(int signum, void (*handler)(int), int flags)
+// {
+// 	struct sigaction	sa;
+
+// 	if (sigemptyset(&sa.sa_mask) == -1)
+// 		return (-1);
+// 	sa.sa_flags = flags;
+// 	sa.sa_handler = handler;
+// 	if (sigaction(signum, &sa, NULL) == -1)
+// 		return (-1);
+// 	return (0);
+// }
+
+// int	set_signal_ign(int signum)
+// {
+// 	return (set_sigaction(signum, SIG_IGN, 0));
+// }
+
+// int	set_signal_dfl(int signum)
+// {
+// 	return (set_sigaction(signum, SIG_DFL, 0));
+// }
 
 void	set_exit_status(int code)
 {

@@ -1,179 +1,255 @@
-// /* ************************************************************************** */
-// /*                                                                            */
-// /*                                                        :::      ::::::::   */
-// /*   exec.c                                             :+:      :+:    :+:   */
-// /*                                                    +:+ +:+         +:+     */
-// /*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
-// /*                                                +#+#+#+#+#+   +#+           */
-// /*   Created: 2025/08/25 21:59:32 by sberete           #+#    #+#             */
-// /*   Updated: 2025/09/02 20:07:58 by sberete          ###   ########.fr       */
-// /*                                                                            */
-// /* ************************************************************************** */
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   exec.c                                             :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/09/10 20:45:00 by sberete           #+#    #+#             */
+/*   Updated: 2025/09/10 19:50:57 by sxrimu           ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
 
-// #include "minishell.h"
+#include "minishell.h"
+#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <fcntl.h>
 
-// if (is_builtin(argv[0]))
-//     run_builtin(argv, data);
-// else
-//     run_external(argv, data->env);
+/* ───────────────────────── extern ───────────────────────── */
 
-// void	init_exec(t_exec *exec, t_ast *node, int prev_fd, t_data *data)
-// {
-// 	exec->prev_read = prev_fd;
-// 	exec->pipe_fd[0] = -1;
-// 	exec->pipe_fd[1] = -1;
-// 	exec->argv = node->argv;
-// 	exec->redirs = node->redirs;
-// 	exec->path = NULL;
-// 	exec->pids = NULL;
-// 	exec->data = data;
-// }
+static int exec_external_in_child(char **argv, t_data *data)
+{
+	char	**envp;
+	char	*path;
 
-// pid_t	exec_command(t_exec *exec, int is_last)
-// {
-// 	pid_t	pid;
+	envp = env_list_to_envp(data->env);
+	path = find_cmd_path(argv[0], data->env);
+	if (!path)
+	{
+		dprintf(2, "minishell: %s: command not found\n", argv[0]);
+		if (envp)
+			free_envp(envp);
+		child_free_and_exit(data, 127);
+	}
+	execve(path, argv, envp);
+	/* si on revient ici, execve a échoué */
+	dprintf(2, "minishell: %s: %s\n", path, strerror(errno));
+	if (envp)
+		free_envp(envp);
+	free(path);
+	if (errno == EACCES)
+		child_free_and_exit(data, 126);
+	child_free_and_exit(data, 126);
+	return (126);
+}
 
-// 	if (!exec || !exec->argv || !exec->argv[0])
-// 		exit(127);
-// 	if (!is_last && pipe(exec->pipe_fd) == -1)
-// 		perror("pipe");
-// 	pid = fork();
-// 	if (pid == -1)
-// 	{
-// 		perror("fork");
-// 		return (-1);
-// 	}
-// 	if (pid == 0) // --- Fils ---
-// 	{
-// 		/* si une entrée précédente existe */
-// 		if (exec->prev_read != -1)
-// 		{
-// 			dup2(exec->prev_read, STDIN_FILENO);
-// 			close(exec->prev_read);
-// 		}
-// 		/* si ce n’est pas la dernière commande, on prépare la sortie */
-// 		if (!is_last)
-// 		{
-// 			dup2(exec->pipe_fd[1], STDOUT_FILENO);
-// 		}
-// 		/* fermer les FDs inutiles dans le fils */
-// 		if (exec->pipe_fd[0] != -1)
-// 			close(exec->pipe_fd[0]);
-// 		if (exec->pipe_fd[1] != -1)
-// 			close(exec->pipe_fd[1]);
-// 		apply_redirs(exec->redirs);
-// 		exec->path = resolve_path(exec->argv[0], exec->data->env);
-// 		if (exec->path)
-// 			execve(exec->path, exec->argv, exec->data->env);
-// 		if (access(exec->argv[0], X_OK) == 0)
-// 			execve(exec->argv[0], exec->argv, exec->data->env);
-// 		perror(exec->argv[0]);
-// 		exit(127);
-// 	}
-// 	// --- Parent ---
-// 	if (exec->prev_read != -1)
-// 		close(exec->prev_read);
-// 	if (!is_last)
-// 		close(exec->pipe_fd[1]);
-// 	return (pid);
-// }
+/* ───────────────────────── redirs builtins en parent ───────────────────────── */
 
-// int	exec_pipe(t_ast *node, t_data *data)
-// {
-// 	t_exec	exec;
-// 	int		prev_fd;
-// 	int		i;
-// 	int		count;
-// 	pid_t	*pids;
-// 	int		status;
-// 	t_ast	*tmp;
+static int run_builtin_in_parent_with_redirs(t_ast *cmd, t_data *data)
+{
+	int saved_in;
+	int saved_out;
+	int st;
 
-// 	prev_fd = -1;
-// 	i = 0;
-// 	count = 0;
-// 	pids = NULL;
-// 	status = 0;
-// 	/* Compter le nombre de commandes */
-// 	tmp = node;
-// 	while (tmp && tmp->type == NODE_PIPE)
-// 	{
-// 		count++;
-// 		tmp = tmp->right;
-// 	}
-// 	count++; // dernière commande
-// 	pids = malloc(sizeof(pid_t) * count);
-// 	if (!pids)
-// 		return (1);
-// 	/* Réinitialiser tmp pour exécution */
-// 	tmp = node;
-// 	i = 0;
-// 	while (tmp && tmp->type == NODE_PIPE)
-// 	{
-// 		init_exec(&exec, tmp->left, prev_fd, data);
-// 		exec.pids = pids;
-// 		pids[i++] = exec_command(&exec, 0);
-// 		prev_fd = exec.pipe_fd[0];
-// 		tmp = tmp->right;
-// 	}
-// 	if (tmp) // dernière commande
-// 	{
-// 		init_exec(&exec, tmp, prev_fd, data);
-// 		exec.pids = pids;
-// 		pids[i++] = exec_command(&exec, 1);
-// 	}
-// 	for (int j = 0; j < i; j++)
-// 		waitpid(pids[j], &status, 0);
-// 	free(pids);
-// 	return (WEXITSTATUS(status));
-// }
+	if (save_stdio(&saved_in, &saved_out) != 0)
+		return (1);
+	/* Prépare heredocs avant les dup */
+	if (run_heredocs_for_redirs(cmd->redirs, data) != 0)
+	{
+		restore_stdio(saved_in, saved_out);
+		return ((int)g_exit_status);
+	}
+	if (apply_redirs(cmd->redirs) != 0)
+	{
+		restore_stdio(saved_in, saved_out);
+		return (1);
+	}
+	st = run_builtin(cmd->argv, data);
+	restore_stdio(saved_in, saved_out);
+	return (st);
+}
 
-// int	exec_ast(t_ast *node, t_data *data)
-// {
-// 	t_exec	exec;
-// 	pid_t	pid;
-// 	int		status;
-// 	int		left_status;
+/* ───────────────────────── exec d’un simple CMD ───────────────────────── */
 
-// 	if (!node)
-// 		return (0);
-// 	if (node->type == NODE_CMD)
-// 	{
-// 		init_exec(&exec, node, -1, data);
-// 		pid = exec_command(&exec, 1);
-// 		waitpid(pid, &status, 0);
-// 		return (WEXITSTATUS(status));
-// 	}
-// 	if (node->type == NODE_PIPE)
-// 		return (exec_pipe(node, data));
-// 	if (node->type == NODE_AND)
-// 	{
-// 		left_status = exec_ast(node->left, data);
-// 		if (left_status == 0)
-// 			return (exec_ast(node->right, data));
-// 		return (left_status);
-// 	}
-// 	if (node->type == NODE_OR)
-// 	{
-// 		left_status = exec_ast(node->left, data);
-// 		if (left_status != 0)
-// 			return (exec_ast(node->right, data));
-// 		return (left_status);
-// 	}
-// 	if (node->type == NODE_SEQ)
-// 	{
-// 		exec_ast(node->left, data);
-// 		return (exec_ast(node->right, data));
-// 	}
-// 	if (node->type == NODE_GROUP)
-// 	{
-// 		pid = fork();
-// 		if (pid == 0)
-// 		{
-// 			status = exec_ast(node->child, data);
-// 			exit(status);
-// 		}
-// 		waitpid(pid, &status, 0);
-// 		return (WEXITSTATUS(status));
-// 	}
-// 	return (0);
-// }
+static int exec_simple_command(t_ast *cmd, t_data *data, int in_pipeline)
+{
+	pid_t	pid;
+	int		st;
+
+	if (!cmd)
+		return (0);
+
+	/* CMD vide : juste redirs (création de fichiers, dernier stdin si heredoc) */
+	if (!cmd->argv || !cmd->argv[0])
+	{
+		if (run_heredocs_for_redirs(cmd->redirs, data) != 0)
+			return ((int)g_exit_status);
+		if (apply_redirs(cmd->redirs) != 0)
+			return (1);
+		return (0);
+	}
+
+	/* builtin en parent si pas de pipeline */
+	if (is_builtin(cmd->argv[0]) && !in_pipeline)
+		return (run_builtin_in_parent_with_redirs(cmd, data));
+
+	/* sinon: forker et tout faire en enfant */
+	pid = fork();
+	if (pid < 0)
+		return (1);
+	if (pid == 0)
+	{
+		int s;
+
+		signals_setup_child();
+
+		if (run_heredocs_for_redirs(cmd->redirs, data) != 0)
+			child_free_and_exit(data, (int)g_exit_status);
+		if (apply_redirs(cmd->redirs) != 0)
+			child_free_and_exit(data, 1);
+
+		if (is_builtin(cmd->argv[0]))
+		{
+			s = run_builtin(cmd->argv, data);
+			child_free_and_exit(data, s);
+		}
+		exec_external_in_child(cmd->argv, data);
+	}
+	/* parent */
+	st = wait_and_update_exit(pid);
+	return (st);
+}
+
+/* ───────────────────────── pipeline (binaire) ───────────────────────── */
+
+static int exec_pipeline(t_ast *node, t_data *data)
+{
+	int		p[2];
+	pid_t	lp;
+	pid_t	rp;
+	int		status_right;
+
+	if (pipe(p) < 0)
+		return (1);
+
+	lp = fork();
+	if (lp < 0)
+	{
+		close(p[0]);
+		close(p[1]);
+		return (1);
+	}
+	if (lp == 0)
+	{
+		int s;
+
+		signals_setup_child();
+		if (dup2(p[1], STDOUT_FILENO) < 0)
+			child_free_and_exit(data, 1);
+		close(p[0]);
+		close(p[1]);
+		s = exec_simple_command(node->left, data, 1);
+		child_free_and_exit(data, s);
+	}
+
+	rp = fork();
+	if (rp < 0)
+	{
+		close(p[0]);
+		close(p[1]);
+		waitpid(lp, NULL, 0);
+		return (1);
+	}
+	if (rp == 0)
+	{
+		int s;
+
+		signals_setup_child();
+		if (dup2(p[0], STDIN_FILENO) < 0)
+			child_free_and_exit(data, 1);
+		close(p[0]);
+		close(p[1]);
+		s = exec_simple_command(node->right, data, 1);
+		child_free_and_exit(data, s);
+	}
+
+	/* parent */
+	close(p[0]);
+	close(p[1]);
+	/* on ignore le code exact du left; on renvoie celui de right */
+	waitpid(lp, NULL, 0);
+	status_right = wait_and_update_exit(rp);
+	return (status_right);
+}
+
+/* ───────────────────────── subshell (group) ───────────────────────── */
+
+static int exec_group_subshell(t_ast *node, t_data *data)
+{
+	pid_t	pid;
+	int		st;
+
+	pid = fork();
+	if (pid < 0)
+		return (1);
+	if (pid == 0)
+	{
+		int s;
+
+		signals_setup_child();
+		s = exec_ast(node->child, data);
+		child_free_and_exit(data, s);
+	}
+	st = wait_and_update_exit(pid);
+	return (st);
+}
+
+/* ───────────────────────── dispatcher récursif ───────────────────────── */
+
+static int exec_node(t_ast *node, t_data *data, int in_pipeline)
+{
+	int ls;
+
+	if (!node)
+		return (0);
+	if (node->type == NODE_CMD)
+		return (exec_simple_command(node, data, in_pipeline));
+	if (node->type == NODE_PIPE)
+		return (exec_pipeline(node, data));
+	if (node->type == NODE_AND)
+	{
+		ls = exec_node(node->left, data, 0);
+		if (ls == 0)
+			return (exec_node(node->right, data, 0));
+		return (ls);
+	}
+	if (node->type == NODE_OR)
+	{
+		ls = exec_node(node->left, data, 0);
+		if (ls != 0)
+			return (exec_node(node->right, data, 0));
+		return (ls);
+	}
+	if (node->type == NODE_SEQ)
+	{
+		(void)exec_node(node->left, data, 0);
+		return (exec_node(node->right, data, 0));
+	}
+	if (node->type == NODE_GROUP)
+		return (exec_group_subshell(node, data));
+	return (0);
+}
+
+/* ───────────────────────── Entrée publique ───────────────────────── */
+
+int	exec_ast(t_ast *node, t_data *data)
+{
+	int status;
+
+	status = exec_node(node, data, 0);
+	g_exit_status = status;
+	data->last_exit = status;
+	return (status);
+}

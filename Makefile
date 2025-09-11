@@ -76,7 +76,13 @@ VALGRIND_CFLAGS = $(filter-out -O%,$(CFLAGS)) -O0
 .PHONY: valgrind vg vg-clean
 valgrind: CFLAGS := $(VALGRIND_CFLAGS)
 valgrind: re
-	@$(VALGRIND) $(VGFLAGS) ./$(NAME) $(ARGS)
+	-@$(VALGRIND) $(VGFLAGS) ./$(NAME) $(ARGS); \
+	 STATUS=$$?; \
+	 if [ $$STATUS -eq 130 ]; then \
+	   echo "==> minishell interrompu par SIGINT (130), ok"; \
+	 elif [ $$STATUS -ne 0 ]; then \
+	   echo "==> minishell a retourné $$STATUS"; exit $$STATUS; \
+	 fi
 	@echo "==> Report: valgrind.log"
 
 vg: valgrind

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   minishell.h                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:46:06 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/07 19:40:40 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/10 19:45:32 by sxrimu           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,13 +27,8 @@
 # include <sys/types.h>
 # include <sys/wait.h>
 # include <unistd.h>
-
+#include <errno.h>
 extern volatile sig_atomic_t	g_exit_status;
-
-# define TOEXP_AUTO -1
-// pas de consigne : l'expander décidera (mot mixte/ sans quotes)
-# define TOEXP_SQUOTE 1 // tout le mot est en quotes simples → ne pas expand
-# define TOEXP_DQUOTE 2 // tout le mot est en quotes doubles → expand autorisé
 
 typedef enum e_token_type
 {
@@ -57,7 +52,7 @@ typedef struct s_token
 {
 	char						*value;
 	t_token_type				type;
-	int							to_expand;
+	bool							can_expand;
 	struct s_token				*next;
 }								t_token;
 
@@ -85,6 +80,8 @@ typedef struct s_redir
 	char *filename; // Nom du fichier ou limiter
 	char						*delim;
 	int							fd;
+	bool filename_can_expand;
+	bool delim_can_expand;
 	struct s_redir *next; // Permet plusieurs redirections
 }								t_redir;
 
@@ -92,6 +89,7 @@ typedef struct s_ast
 {
 	t_node_type type;    // Type du nœud
 	char **argv;         // Tableau d'arguments : ["ls", "-l", NULL]
+	bool *argv_can_expand;
 	t_redir *redirs;     // Liste chaînée des redirections
 	struct s_ast *left;  // Nœud gauche pour opérateurs binaires
 	struct s_ast *right; // Nœud droit pour opérateurs binaires
@@ -149,15 +147,16 @@ void							print_syntax_error(char *msg);
 /* AST */
 t_ast							*new_ast_node(t_node_type type);
 void							free_ast(t_ast *node);
-t_redir							*new_redir(t_redir_type type, char *filename,
-									char *delim);
+t_redir *new_redir(t_redir_type type,
+                   char *filename, char *delim,
+                   bool filename_can_expand, bool delim_can_expand);
 
 void							add_redir(t_ast *cmd_node, t_redir *redir);
 t_ast							*parse_sequence(t_token **tokens);
 void							print_ast(t_ast *node, int depth);
 t_token							*parse_redirection(t_ast *cmd, t_token *tok);
 int								exec_ast(t_ast *node, t_data *data);
-void							apply_redirs(t_redir *redirs);
+int							apply_redirs(t_redir *redirs);
 char							**get_env_path(char **env);
 char							*resolve_path(char *cmd, char **env);
 t_env							*env_from_environ(char **environ);
@@ -197,5 +196,66 @@ void							signals_setup_child(void);
 void							signals_setup_heredoc_parent(void);
 void							signals_setup_heredoc_child(void);
 void							sync_exit_status(t_data *data);
+/* ========= EXEC ========= */
+int     exec_ast(t_ast *node, t_data *data);
+
+/* Builtins (détection + exécution) */
+int     is_builtin(const char *name);
+int     run_builtin(char **argv, t_data *data);
+int     run_builtin_parent(t_ast *cmd, t_data *data);
+
+/* Externes */
+int     run_external(char **argv, t_data *data);
+
+/* Redirections / heredoc */
+int     apply_redirs(t_redir *redirs);
+int     run_heredocs_for_redirs(t_redir *redirs, t_data *data); /* stub pour l’instant */
+
+/* Env list <-> envp */
+char  **env_list_to_envp(t_env *lst);
+void    free_envp(char **envp);
+
+/* PATH */
+char   *find_cmd_path(char *cmd, t_env *envlst);
+
+/* Wait status helpers */
+int     normalize_wait_status(int wstatus);
+int     wait_and_get_status(pid_t pid);
+
+/* Signals enfant */
+void    signals_setup_parent(void);         /* parent interactif (readline + rl_replace_line) */
+void    signals_setup_parent_execwait(void);/* parent pendant un wait: ignore INT/QUIT */
+void    signals_setup_child(void);          /* enfants exec/pipes/subshell */
+void    signals_setup_heredoc_parent(void); /* parent pendant heredoc */
+void    signals_setup_heredoc_child(void);  /* child heredoc */
+int	set_sigaction(int signum, void (*handler)(int), int flags);
+int	set_signal_ign(int signum);
+int	set_signal_dfl(int signum);
+char *hd_strip_outer_quotes(const char *s);
+char *heredoc_expand_line(const char *line, t_data *data);
+/* Heredoc */
+int   run_heredocs_for_redirs(t_redir *redirs, t_data *data);
+
+/* Signals (déjà posés) */
+void  signals_setup_parent(void);
+void  signals_setup_parent_execwait(void);
+void  signals_setup_child(void);
+void  signals_setup_heredoc_parent(void);
+void  signals_setup_heredoc_child(void);
+int ft_echo(char **argv, t_data *data);
+int ft_cd(char **argv, t_data *data);
+int ft_pwd(char **argv, t_data *data);
+int ft_export(char **argv, t_data *data);
+int ft_unset(char **argv, t_data *data);
+int ft_env(char **argv, t_data *data);
+int ft_exit(char **argv, t_data *data);
+void  child_free_and_exit(t_data *data, int status);
+char **env_list_to_envp(t_env *lst);
+void  free_envp(char **envp);
+char *find_cmd_path(char *cmd, t_env *envlst);
+int   wait_and_update_exit(pid_t pid);
+int   save_stdio(int *saved_in, int *saved_out);
+void  restore_stdio(int saved_in, int saved_out);
+void	update_exit_from_wait(int status);
 
 #endif

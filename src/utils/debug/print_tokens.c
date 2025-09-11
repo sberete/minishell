@@ -3,27 +3,30 @@
 /*                                                        :::      ::::::::   */
 /*   print_tokens.c                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:50:16 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/05 19:25:20 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/09 18:41:49 by sxrimu           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-void	print_tokens(t_token *tokens)
+void	print_tokens(t_token *t)
 {
-	t_token	*tmp;
-
-	tmp = tokens;
 	printf("Tokens extraits :\n");
-	while (tmp)
+	while (t)
 	{
-		printf("Token: %-10s | Type: %d | to_expand: %d\n",
-			tmp->value,
-			tmp->type,
-			tmp->to_expand);
-		tmp = tmp->next;
+		const char *val = t->value;
+		const char *exp = "false";
+
+		if (val == NULL)
+			val = "(null)";
+		if (t->can_expand)
+			exp = "true";
+
+		printf("Token: %-10s | Type: %d | can_expand: %s\n",
+			val, (int)t->type, exp);
+		t = t->next;
 	}
 }

@@ -3,42 +3,49 @@
 /*                                                        :::      ::::::::   */
 /*   lexer_utils.c                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:52:29 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/05 19:22:36 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/09 19:36:13 by sxrimu           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-t_token	*new_token_node(char *value)
+/* helper: longueur sans espaces/tabs/CRLF finaux */
+static size_t rtrim_len(const char *s)
 {
-	t_token	*token;
-	size_t	len;
+    size_t len;
 
-	token = malloc(sizeof(t_token));
-	if (!token)
-	{
-		free(value);
-		return (NULL);
-	}
-	token->value = value;
-	token->type = get_token_type(value);
-	token->next = NULL;
-	token->to_expand = TOEXP_AUTO;
-	if (token->type == T_WORD && token->value)
-	{
-		len = ft_strlen(token->value);
-		if (len >= 2 && token->value[0] == '\'' && token->value[len
-			- 1] == '\'')
-			token->to_expand = TOEXP_SQUOTE; // tout le mot est '...'
-		else if (len >= 2 && token->value[0] == '\"' && token->value[len
-			- 1] == '\"')
-			token->to_expand = TOEXP_DQUOTE; // tout le mot est "..."
-												// sinon, laisse à AUTO
-	}
-	return (token);
+    if (!s) return 0;
+    len = ft_strlen(s);
+    while (len > 0 && (s[len - 1] == ' ' || s[len - 1] == '\t'
+                    || s[len - 1] == '\r' || s[len - 1] == '\n'))
+        len--;
+    return len;
+}
+
+static inline bool is_fully_single_quoted_trim(const char *s)
+{
+    size_t len = rtrim_len(s);
+    if (len < 2) return false;
+    return (s[0] == '\'' && s[len - 1] == '\'');
+}
+
+t_token *new_token_node(char *value)
+{
+    t_token *token = malloc(sizeof(*token));
+    if (!token) { free(value); return NULL; }
+
+    token->value      = value;
+    token->type       = get_token_type(value);
+    token->next       = NULL;
+    token->can_expand = true;
+
+    if (token->type == T_WORD && token->value)
+        token->can_expand = !is_fully_single_quoted_trim(token->value);
+
+    return token;
 }
 
 bool	add_token_back(t_token **head, t_token *new)
@@ -61,9 +68,10 @@ bool	add_token_back(t_token **head, t_token *new)
 
 void	skip_spaces(t_data *data, int *i)
 {
-	while (data->line[*i] == ' ')
+	while (data->line[*i] == ' ' || data->line[*i] == '\t')
 		(*i)++;
 }
+
 
 t_token_type	get_token_type(const char *str)
 {

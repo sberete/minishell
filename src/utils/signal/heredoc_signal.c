@@ -3,19 +3,35 @@
 /*                                                        :::      ::::::::   */
 /*   heredoc_signal.c                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/07 17:13:56 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/07 17:56:09 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/10 19:44:37 by sxrimu           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
+#include <signal.h>
+#include <unistd.h>
 
-/* ───────────────────────── Heredoc setup ─────────────────────────
-   Recommandation : faire le heredoc dans un CHILD dédié.
-   - Parent : peut laisser SIGINT tel quel, ou l'ignorer pendant l'attente.
-   - Child heredoc : défaut pour que ^C interrompe la lecture (exit 130). */
+// static void	heredoc_child_sigint(int signo)
+// {
+// 	(void)signo;
+// 	write(STDOUT_FILENO, "\n", 1);
+// 	_exit(130);
+// }
+
+// void	signals_setup_heredoc_parent(void)
+// {
+// 	set_signal_ign(SIGINT);
+// 	set_signal_ign(SIGQUIT);
+// }
+
+// void	signals_setup_heredoc_child(void)
+// {
+// 	set_sigaction(SIGINT, heredoc_child_sigint, 0);
+// 	set_signal_ign(SIGQUIT);
+// }
 
 void	signals_setup_heredoc_parent(void)
 {

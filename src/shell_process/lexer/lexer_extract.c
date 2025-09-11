@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   lexer_extract.c                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:53:06 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/05 19:23:33 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/09 19:32:07 by sxrimu           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,8 +43,11 @@ char	*extract_word(t_data *data, int *i)
 	while (data->line[*i])
 	{
 		c = data->line[*i];
-		if (!in_s && !in_d && (c == ' ' || is_operator_start(c)))
-			break ;
+		if (!in_s && !in_d)
+		{
+			if (c == ' ' || c == '\t' || is_operator_start(c))
+				break;
+		}
 		if (c == '\'' && !in_d)
 			in_s = !in_s;
 		else if (c == '"' && !in_s)

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ast.c                                              :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:52:08 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/07 20:23:22 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/09 18:36:01 by sxrimu           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,93 +36,105 @@
 // 	return (count);
 // }
 
-t_ast	*parse_command(t_token **tokens)
+static int is_redir_type(t_token_type t)
 {
-	t_token	*tok;
-	t_ast	*cmd;
-	t_token	*scan;
-	int		argc;
-	int		i;
-	t_token	*next;
+    return (t == T_REDIR_IN || t == T_REDIR_OUT
+         || t == T_APPEND   || t == T_HEREDOC);
+}
 
-	tok = *tokens;
-	cmd = NULL;
-	argc = 0;
-	/* 0) Redirs en tête (<< EOF, > out, < in, >> out) */
-	while (tok && (tok->type == T_REDIR_IN || tok->type == T_REDIR_OUT
-			|| tok->type == T_APPEND || tok->type == T_HEREDOC))
-	{
-		if (!cmd)
-		{
-			cmd = new_ast_node(NODE_CMD);
-			if (!cmd)
-				return (NULL);
-		}
-		next = parse_redirection(cmd, tok); /* consomme op + WORD */
-		if (next == tok)                    /* ERREUR si pas d'avancement */
-			return (free_ast(cmd), NULL);
-		tok = next; /* AVANCER (NULL autorisé) */
-	}
-	/* Si redirs en tête et pas de mot ensuite → CMD vide mais valide */
-	if (cmd && (!tok || tok->type != T_WORD))
-	{
-		*tokens = tok;
-		return (cmd);
-	}
-	/* 1) Compter les WORD jusqu'à opérateur de niveau sup. */
-	scan = tok;
-	while (scan && scan->type != T_PIPE && scan->type != T_AND
-		&& scan->type != T_OR && scan->type != T_SEPARATOR
-		&& scan->type != T_PAREN_CLOSE)
-	{
-		if (scan->type == T_REDIR_IN || scan->type == T_REDIR_OUT
-			|| scan->type == T_APPEND || scan->type == T_HEREDOC)
-		{
-			/* Valider la présence d'un WORD derrière l'opérateur */
-			if (!scan->next || scan->next->type != T_WORD)
-				return (free_ast(cmd), NULL);
-			scan = scan->next->next; /* skip op + WORD */
-			continue ;
-		}
-		if (scan->type == T_WORD)
-			argc++;
-		scan = scan->next;
-	}
-	/* 2) S'assurer d'avoir un noeud CMD */
-	if (!cmd)
-	{
-		cmd = new_ast_node(NODE_CMD);
-		if (!cmd)
-			return (NULL);
-	}
-	/* 3) Allouer argv */
-	cmd->argv = (char **)malloc(sizeof(char *) * (argc + 1));
-	if (!cmd->argv)
-		return (free_ast(cmd), NULL);
-	/* 4) Remplir argv & redirs entre [tok..scan) */
-	i = 0;
-	while (tok && tok != scan)
-	{
-		if (tok->type == T_REDIR_IN || tok->type == T_REDIR_OUT
-			|| tok->type == T_APPEND || tok->type == T_HEREDOC)
-		{
-			next = parse_redirection(cmd, tok);
-			if (next == tok) /* ERREUR si pas d'avancement */
-				return (free_ast(cmd), NULL);
-			tok = next; /* AVANCER (NULL autorisé) */
-			continue ;
-		}
-		if (tok->type == T_WORD)
-			cmd->argv[i++] = ft_strdup(tok->value);
-		tok = tok->next;
-	}
-	cmd->argv[i] = NULL;
-	/* 5) Avancer le flux */
-	*tokens = scan;
-	/* 6) Rien du tout ? -> NULL */
-	if (i == 0 && cmd->redirs == NULL)
-		return (free_ast(cmd), NULL);
-	return (cmd);
+t_ast *parse_command(t_token **tokens)
+{
+    t_token *tok = *tokens;
+    t_ast   *cmd = NULL;
+    t_token *scan;
+    int      argc = 0;
+    int      i;
+    t_token *next;
+
+    /* 0) Redirs en tête */
+    while (tok && is_redir_type(tok->type))
+    {
+        if (!cmd)
+        {
+            cmd = new_ast_node(NODE_CMD);
+            if (!cmd) return NULL;
+        }
+        next = parse_redirection(cmd, tok);      /* consomme op + WORD */
+        if (next == tok)                         /* erreur: pas d'avancement */
+            return free_ast(cmd), NULL;
+        tok = next;                              /* avance (NULL autorisé) */
+    }
+
+    /* CMD “vide” mais avec redirs ? OK */
+    if (cmd && (!tok || tok->type != T_WORD))
+    {
+        *tokens = tok;
+        return cmd;
+    }
+
+    /* 1) Compter les WORD (skip redirs intercalées) */
+    scan = tok;
+    while (scan && scan->type != T_PIPE && scan->type != T_AND
+           && scan->type != T_OR && scan->type != T_SEPARATOR
+           && scan->type != T_PAREN_CLOSE)
+    {
+        if (is_redir_type(scan->type))
+        {
+            if (!scan->next || scan->next->type != T_WORD)
+                return free_ast(cmd), NULL;
+            scan = scan->next->next;             /* skip op + WORD */
+            continue;
+        }
+        if (scan->type == T_WORD)
+            argc++;
+        scan = scan->next;
+    }
+
+    /* 2) S'assurer d'avoir un nœud commande */
+    if (!cmd)
+    {
+        cmd = new_ast_node(NODE_CMD);
+        if (!cmd) return NULL;
+    }
+
+    /* 3) Allouer argv + flags */
+    cmd->argv = (char **)malloc(sizeof(char *) * (argc + 1));
+    if (!cmd->argv) return free_ast(cmd), NULL;
+
+    cmd->argv_can_expand = (bool *)malloc(sizeof(bool) * argc);
+    if (!cmd->argv_can_expand) { free(cmd->argv); return free_ast(cmd), NULL; }
+
+    /* 4) Remplir argv & redirs entre [tok..scan) */
+    i = 0;
+    while (tok && tok != scan)
+    {
+        if (is_redir_type(tok->type))
+        {
+            next = parse_redirection(cmd, tok);
+            if (next == tok)                     /* erreur */
+                return free_ast(cmd), NULL;
+            tok = next;
+            continue;
+        }
+        if (tok->type == T_WORD)
+        {
+            cmd->argv[i] = ft_strdup(tok->value);
+            if (!cmd->argv[i]) return free_ast(cmd), NULL;
+            cmd->argv_can_expand[i] = tok->can_expand;  /* copie du flag */
+            i++;
+        }
+        tok = tok->next;
+    }
+    cmd->argv[i] = NULL;
+
+    /* 5) Avancer le flux */
+    *tokens = scan;
+
+    /* 6) Rien du tout ? -> NULL */
+    if (i == 0 && cmd->redirs == NULL)
+        return free_ast(cmd), NULL;
+
+    return cmd;
 }
 
 t_ast	*parse_group(t_token **tokens)

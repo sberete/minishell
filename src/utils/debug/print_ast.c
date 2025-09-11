@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   print_ast.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:50:30 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/07 19:49:18 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/09 18:45:37 by sxrimu           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,16 +28,38 @@ static void	print_redirs(t_redir *redir, int depth)
 {
 	while (redir)
 	{
+		const char *label = "";
+		const char *name = "(null)";
+		const char *suffix = "";
+
 		print_indent(depth);
 		printf("REDIR: ");
+
 		if (redir->type == REDIR_IN)
-			printf("< %s\n", redir->filename);
+			label = "< ";
 		else if (redir->type == REDIR_OUT)
-			printf("> %s\n", redir->filename);
+			label = "> ";
 		else if (redir->type == REDIR_APPEND)
-			printf(">> %s\n", redir->filename);
+			label = ">> ";
 		else if (redir->type == REDIR_HEREDOC)
-			printf("<< %s\n", redir->delim);
+			label = "<< ";
+
+		if (redir->type == REDIR_HEREDOC)
+		{
+			if (redir->delim)
+				name = redir->delim;
+			if (!redir->delim_can_expand)
+				suffix = " (noexp)";
+		}
+		else
+		{
+			if (redir->filename)
+				name = redir->filename;
+			if (!redir->filename_can_expand)
+				suffix = " (noexp)";
+		}
+		printf("%s%s%s\n", label, name, suffix);
+
 		redir = redir->next;
 	}
 }
@@ -61,14 +83,21 @@ void	print_ast(t_ast *node, int depth)
 	int	i;
 
 	if (!node)
-		return ;
+		return;
 	print_indent(depth);
 	if (node->type == NODE_CMD)
 	{
 		printf("CMD: ");
 		i = 0;
 		while (node->argv && node->argv[i])
-			printf("%s ", node->argv[i++]);
+		{
+			const char *word = node->argv[i];
+			const char *suffix = "";
+			if (node->argv_can_expand && !node->argv_can_expand[i])
+				suffix = "(noexp)";
+			printf("%s%s ", word, suffix);
+			i++;
+		}
 		printf("\n");
 		print_redirs(node->redirs, depth + 1);
 	}

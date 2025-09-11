@@ -1,32 +1,83 @@
 #include "minishell.h"
 
-void	apply_redirs(t_redir *redirs)
-{
-	int	fd;
+/* NOTE:
+ * - L'expand sera ajouté plus tard.
+ * - Le strip des quotes se fera ici avant open() quand tu seras prêt.
+ * - Pour HEREDOC, run_heredocs_for_redirs préparera r->fd (lecture).
+ */
 
-	while (redirs)
+int apply_redirs(t_redir *redirs)
+{
+	t_redir *r;
+	int      fd;
+
+	r = redirs;
+	while (r)
 	{
-		if (redirs->type == REDIR_IN)
-			fd = open(redirs->filename, O_RDONLY);
-		else if (redirs->type == REDIR_OUT)
-			fd = open(redirs->filename, O_WRONLY | O_CREAT | O_TRUNC, 0644);
-		else if (redirs->type == REDIR_APPEND)
-			fd = open(redirs->filename, O_WRONLY | O_CREAT | O_APPEND, 0644);
-		if (fd < 0)
+		if (r->type == REDIR_IN)
 		{
-			perror(redirs->filename);
-			exit(1);
+			fd = open(r->filename, O_RDONLY);
+			if (fd < 0)
+			{
+				dprintf(2, "minishell: %s: %s\n", r->filename, strerror(errno));
+				return 1;
+			}
+			if (dup2(fd, STDIN_FILENO) < 0)
+			{
+				close(fd);
+				return 1;
+			}
+			close(fd);
 		}
-		else
+		else if (r->type == REDIR_OUT)
 		{
-			printf("[DEBUG] %s ouvert avec fd=%d (type=%d)\n", redirs->filename,
-				fd, redirs->type);
+			fd = open(r->filename, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+			if (fd < 0)
+			{
+				dprintf(2, "minishell: %s: %s\n", r->filename, strerror(errno));
+				return 1;
+			}
+			if (dup2(fd, STDOUT_FILENO) < 0)
+			{
+				close(fd);
+				return 1;
+			}
+			close(fd);
 		}
-		if (redirs->type == REDIR_IN || redirs->type == REDIR_HEREDOC)
-			dup2(fd, STDIN_FILENO);
-		else
-			dup2(fd, STDOUT_FILENO);
-		close(fd);
-		redirs = redirs->next;
+		else if (r->type == REDIR_APPEND)
+		{
+			fd = open(r->filename, O_WRONLY | O_CREAT | O_APPEND, 0644);
+			if (fd < 0)
+			{
+				dprintf(2, "minishell: %s: %s\n", r->filename, strerror(errno));
+				return 1;
+			}
+			if (dup2(fd, STDOUT_FILENO) < 0)
+			{
+				close(fd);
+				return 1;
+			}
+			close(fd);
+		}
+		else if (r->type == REDIR_HEREDOC)
+		{
+			if (r->fd < 0)
+			{
+				dprintf(2, "minishell: heredoc: internal error (no fd)\n");
+				return 1;
+			}
+			if (dup2(r->fd, STDIN_FILENO) < 0)
+			{
+				close(r->fd);
+				r->fd = -1;
+				return 1;
+			}
+			close(r->fd);
+			r->fd = -1;
+		}
+		r = r->next;
 	}
+	return 0;
 }
+
+  

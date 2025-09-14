@@ -6,7 +6,7 @@
 /*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:46:06 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/10 19:45:32 by sxrimu           ###   ########.fr       */
+/*   Updated: 2025/09/14 20:11:38 by sxrimu           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,15 +56,6 @@ typedef struct s_token
 	struct s_token				*next;
 }								t_token;
 
-typedef enum e_node_type
-{
-	NODE_CMD,   // Commande simple : ls -l
-	NODE_PIPE,  // cmd1 | cmd2
-	NODE_AND,   // cmd1 && cmd2
-	NODE_OR,    // cmd1 || cmd2
-	NODE_SEQ,   // cmd1 ; cmd2
-	NODE_GROUP, // (cmd1 | cmd2)
-}								t_node_type;
 
 typedef enum e_redir_type
 {
@@ -84,6 +75,16 @@ typedef struct s_redir
 	bool delim_can_expand;
 	struct s_redir *next; // Permet plusieurs redirections
 }								t_redir;
+
+typedef enum e_node_type
+{
+	NODE_CMD,   // Commande simple : ls -l
+	NODE_PIPE,  // cmd1 | cmd2
+	NODE_AND,   // cmd1 && cmd2
+	NODE_OR,    // cmd1 || cmd2
+	NODE_SEQ,   // cmd1 ; cmd2
+	NODE_GROUP, // (cmd1 | cmd2)
+}								t_node_type;
 
 typedef struct s_ast
 {
@@ -257,5 +258,9 @@ int   wait_and_update_exit(pid_t pid);
 int   save_stdio(int *saved_in, int *saved_out);
 void  restore_stdio(int saved_in, int saved_out);
 void	update_exit_from_wait(int status);
+char   **expand_argv_dup(t_ast *cmd, t_data *data);
+int     expand_redirs_inplace(t_redir *r, t_data *data);
+char    *ms_expand_vars(const char *s, t_data *data);
+
 
 #endif

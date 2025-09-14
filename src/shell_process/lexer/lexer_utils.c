@@ -6,98 +6,98 @@
 /*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:52:29 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/09 19:36:13 by sxrimu           ###   ########.fr       */
+/*   Updated: 2025/09/14 17:57:48 by sxrimu           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-/* helper: longueur sans espaces/tabs/CRLF finaux */
-static size_t rtrim_len(const char *s)
-{
-    size_t len;
+/* -------- helpers internes ----------------------------------------------- */
 
-    if (!s) return 0;
-    len = ft_strlen(s);
-    while (len > 0 && (s[len - 1] == ' ' || s[len - 1] == '\t'
-                    || s[len - 1] == '\r' || s[len - 1] == '\n'))
-        len--;
-    return len;
+static bool	is_fully_single_quoted(const char *s)
+{
+	size_t	len;
+
+	if (!s)
+		return (false);
+	len = ft_strlen(s);
+	while (len && (s[len - 1] == ' ' || s[len - 1] == '\t'
+			|| s[len - 1] == '\n' || s[len - 1] == '\r'))
+		len--;
+	return (len >= 2 && s[0] == '\'' && s[len - 1] == '\'');
 }
 
-static inline bool is_fully_single_quoted_trim(const char *s)
+/* -------- API utils lexer ------------------------------------------------ */
+
+t_token	*new_token_node(char *value_own)
 {
-    size_t len = rtrim_len(s);
-    if (len < 2) return false;
-    return (s[0] == '\'' && s[len - 1] == '\'');
-}
+	t_token	*n;
 
-t_token *new_token_node(char *value)
-{
-    t_token *token = malloc(sizeof(*token));
-    if (!token) { free(value); return NULL; }
-
-    token->value      = value;
-    token->type       = get_token_type(value);
-    token->next       = NULL;
-    token->can_expand = true;
-
-    if (token->type == T_WORD && token->value)
-        token->can_expand = !is_fully_single_quoted_trim(token->value);
-
-    return token;
+	n = (t_token *)malloc(sizeof(t_token));
+	if (!n)
+	{
+		free(value_own);
+		return (NULL);
+	}
+	n->value = value_own; /* ownership: pas de strdup */
+	n->type = get_token_type(n->value);
+	n->can_expand = (n->type == T_WORD) && !is_fully_single_quoted(n->value);
+	n->next = NULL;
+	return (n);
 }
 
 bool	add_token_back(t_token **head, t_token *new)
 {
-	t_token	*tmp;
+	t_token	*cur;
 
-	if (!new)
+	if (!head || !new)
 		return (false);
 	if (!*head)
 	{
 		*head = new;
 		return (true);
 	}
-	tmp = *head;
-	while (tmp->next)
-		tmp = tmp->next;
-	tmp->next = new;
+	cur = *head;
+	while (cur->next)
+		cur = cur->next;
+	cur->next = new;
 	return (true);
 }
 
 void	skip_spaces(t_data *data, int *i)
 {
-	while (data->line[*i] == ' ' || data->line[*i] == '\t')
+	if (!data || !data->line || !i)
+		return ;
+	while (data->line[*i] == ' ' || data->line[*i] == '\t'
+		|| data->line[*i] == '\n' || data->line[*i] == '\r')
 		(*i)++;
 }
-
 
 t_token_type	get_token_type(const char *str)
 {
 	if (!str)
 		return (T_UNKNOWN);
-	if (ft_strcmp(str, "&&") == 0)
+	if (!ft_strcmp(str, "&&"))
 		return (T_AND);
-	else if (ft_strcmp(str, "||") == 0)
+	else if (!ft_strcmp(str, "||"))
 		return (T_OR);
-	else if (ft_strcmp(str, "|") == 0)
+	else if (!ft_strcmp(str, "|"))
 		return (T_PIPE);
-	else if (ft_strcmp(str, "<<") == 0)
+	else if (!ft_strcmp(str, "<<"))
 		return (T_HEREDOC);
-	else if (ft_strcmp(str, ">>") == 0)
+	else if (!ft_strcmp(str, ">>"))
 		return (T_APPEND);
-	else if (ft_strcmp(str, "<") == 0)
+	else if (!ft_strcmp(str, "<"))
 		return (T_REDIR_IN);
-	else if (ft_strcmp(str, ">") == 0)
+	else if (!ft_strcmp(str, ">"))
 		return (T_REDIR_OUT);
-	else if (ft_strcmp(str, ";") == 0)
+	else if (!ft_strcmp(str, ";"))
 		return (T_SEPARATOR);
-	else if (ft_strcmp(str, "(") == 0)
+	else if (!ft_strcmp(str, "("))
 		return (T_PAREN_OPEN);
-	else if (ft_strcmp(str, ")") == 0)
+	else if (!ft_strcmp(str, ")"))
 		return (T_PAREN_CLOSE);
-	else if (ft_strcmp(str, "*") == 0)
+	else if (!ft_strcmp(str, "*"))
 		return (T_WILDCARD);
 	else if (*str == '\0')
 		return (T_END);

@@ -6,7 +6,7 @@
 /*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/10 20:45:00 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/10 19:50:57 by sxrimu           ###   ########.fr       */
+/*   Updated: 2025/09/12 22:29:25 by sxrimu           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,6 +31,7 @@ static int exec_external_in_child(char **argv, t_data *data)
 		dprintf(2, "minishell: %s: command not found\n", argv[0]);
 		if (envp)
 			free_envp(envp);
+		free_tab(argv);
 		child_free_and_exit(data, 127);
 	}
 	execve(path, argv, envp);
@@ -39,37 +40,68 @@ static int exec_external_in_child(char **argv, t_data *data)
 	if (envp)
 		free_envp(envp);
 	free(path);
+	free_tab(argv);
 	if (errno == EACCES)
 		child_free_and_exit(data, 126);
 	child_free_and_exit(data, 126);
 	return (126);
 }
 
-/* ───────────────────────── redirs builtins en parent ───────────────────────── */
-
-static int run_builtin_in_parent_with_redirs(t_ast *cmd, t_data *data)
+/* helper local, visible uniquement dans ce fichier */
+static int is_exit_name(const char *s)
 {
-	int saved_in;
-	int saved_out;
-	int st;
-
-	if (save_stdio(&saved_in, &saved_out) != 0)
-		return (1);
-	/* Prépare heredocs avant les dup */
-	if (run_heredocs_for_redirs(cmd->redirs, data) != 0)
-	{
-		restore_stdio(saved_in, saved_out);
-		return ((int)g_exit_status);
-	}
-	if (apply_redirs(cmd->redirs) != 0)
-	{
-		restore_stdio(saved_in, saved_out);
-		return (1);
-	}
-	st = run_builtin(cmd->argv, data);
-	restore_stdio(saved_in, saved_out);
-	return (st);
+    return (s && ft_strcmp(s, "exit") == 0);
 }
+
+/* ───────── redirs + builtins en parent (argvx déjà expansé, sans fuite de FDs) ───────── */
+static int run_builtin_in_parent_with_redirs(t_ast *cmd, char **argvx, t_data *data)
+{
+    int saved_in  = -1;
+    int saved_out = -1;
+    int st;
+
+	/* Pas de redirections -> pas de dup, exécuter directement */
+	if (cmd->redirs == NULL) {
+		if (is_exit_name(argvx[0])) {
+			/* ft_exit ne revient pas */
+			return ft_exit(argvx, data);
+		}
+		return run_builtin(argvx, data);
+	}
+
+    /* Il y a des redirections -> dupliquer stdin/stdout */
+    if (save_stdio(&saved_in, &saved_out) != 0)
+        return 1;
+
+    /* Préparer les heredocs avant touchers aux flux (déjà fait, mais ici on les ouvre) */
+    if (run_heredocs_for_redirs(cmd->redirs, data) != 0) {
+        if (saved_in  >= 0) close(saved_in);
+        if (saved_out >= 0) close(saved_out);
+        return (int)g_exit_status;
+    }
+
+    if (apply_redirs(cmd->redirs) != 0) {
+        if (saved_in  >= 0) close(saved_in);
+        if (saved_out >= 0) close(saved_out);
+        return 1;
+    }
+
+    /* Cas spécial: exit — fermer nos dup AVANT de quitter */
+    if (is_exit_name(argvx[0])) {
+        if (saved_in  >= 0) close(saved_in);
+        if (saved_out >= 0) close(saved_out);
+        return ft_exit(argvx, data); /* ne revient pas */
+    }
+
+    /* Builtin normal */
+    st = run_builtin(argvx, data);
+
+    /* Restaurer stdio puis fermer nos dup */
+    restore_stdio(saved_in, saved_out);
+    return st;
+}
+
+
 
 /* ───────────────────────── exec d’un simple CMD ───────────────────────── */
 
@@ -77,11 +109,16 @@ static int exec_simple_command(t_ast *cmd, t_data *data, int in_pipeline)
 {
 	pid_t	pid;
 	int		st;
+	char  **argvx;
 
 	if (!cmd)
 		return (0);
 
-	/* CMD vide : juste redirs (création de fichiers, dernier stdin si heredoc) */
+	/* Expansion des redirs en place (filenames) */
+	if (expand_redirs_inplace(cmd->redirs, data) != 0)
+		return (1);
+
+	/* CMD vide : seulement redirs */
 	if (!cmd->argv || !cmd->argv[0])
 	{
 		if (run_heredocs_for_redirs(cmd->redirs, data) != 0)
@@ -91,14 +128,26 @@ static int exec_simple_command(t_ast *cmd, t_data *data, int in_pipeline)
 		return (0);
 	}
 
-	/* builtin en parent si pas de pipeline */
-	if (is_builtin(cmd->argv[0]) && !in_pipeline)
-		return (run_builtin_in_parent_with_redirs(cmd, data));
+	/* Expansion argv */
+	argvx = expand_argv_dup(cmd, data);
+	if (!argvx)
+		return (1);
 
-	/* sinon: forker et tout faire en enfant */
+	/* builtin en parent si pas de pipeline */
+	if (is_builtin(argvx[0]) && !in_pipeline)
+	{
+		st = run_builtin_in_parent_with_redirs(cmd, argvx, data);
+		free_tab(argvx);
+		return (st);
+	}
+
+	/* sinon: child */
 	pid = fork();
 	if (pid < 0)
+	{
+		free_tab(argvx);
 		return (1);
+	}
 	if (pid == 0)
 	{
 		int s;
@@ -106,21 +155,32 @@ static int exec_simple_command(t_ast *cmd, t_data *data, int in_pipeline)
 		signals_setup_child();
 
 		if (run_heredocs_for_redirs(cmd->redirs, data) != 0)
-			child_free_and_exit(data, (int)g_exit_status);
-		if (apply_redirs(cmd->redirs) != 0)
-			child_free_and_exit(data, 1);
-
-		if (is_builtin(cmd->argv[0]))
 		{
-			s = run_builtin(cmd->argv, data);
+			free_tab(argvx);
+			child_free_and_exit(data, (int)g_exit_status);
+		}
+		if (apply_redirs(cmd->redirs) != 0)
+		{
+			free_tab(argvx);
+			child_free_and_exit(data, 1);
+		}
+
+		if (is_builtin(argvx[0]))
+		{
+			s = run_builtin(argvx, data);
+			free_tab(argvx);
 			child_free_and_exit(data, s);
 		}
-		exec_external_in_child(cmd->argv, data);
+		/* externe */
+		/* exec_external_in_child DOIT free argvx si execve échoue */
+		exec_external_in_child(argvx, data);
 	}
 	/* parent */
+	free_tab(argvx);
 	st = wait_and_update_exit(pid);
 	return (st);
 }
+
 
 /* ───────────────────────── pipeline (binaire) ───────────────────────── */
 

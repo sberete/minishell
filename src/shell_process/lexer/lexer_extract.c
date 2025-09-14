@@ -6,7 +6,7 @@
 /*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:53:06 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/09 19:32:07 by sxrimu           ###   ########.fr       */
+/*   Updated: 2025/09/14 17:58:32 by sxrimu           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,52 +14,51 @@
 
 char	*extract_operator(t_data *data, int *i)
 {
-	int		op_len;
-	char	*token;
+	int		len;
+	char	*op;
 
-	op_len = get_operator_len(&data->line[*i]);
-	if (op_len > 0)
-	{
-		token = ft_substr(data->line, *i, op_len);
-		if (!token)
-			return (NULL);
-		*i += op_len;
-		return (token);
-	}
-	return (NULL);
+	len = get_operator_len(&data->line[*i]);
+	if (len <= 0)
+		return (NULL);
+	op = ft_substr(data->line, *i, len);
+	if (!op)
+		return (NULL);
+	*i += len;
+	return (op);
 }
 
 char	*extract_word(t_data *data, int *i)
 {
-	int		in_s;
-	int		in_d;
-	int		start;
-	char	*token;
-	char	c;
+	int	in_s;
+	int	in_d;
+	int	start;
 
 	in_s = 0;
 	in_d = 0;
 	start = *i;
 	while (data->line[*i])
 	{
-		c = data->line[*i];
-		if (!in_s && !in_d)
-		{
-			if (c == ' ' || c == '\t' || is_operator_start(c))
-				break;
-		}
-		if (c == '\'' && !in_d)
+		if (!in_s && !in_d && (data->line[*i] == ' ' || data->line[*i] == '\t'
+				|| data->line[*i] == '\n' || data->line[*i] == '\r'
+				|| is_operator_start(data->line[*i])))
+			break ;
+		if (data->line[*i] == '\'' && !in_d)
 			in_s = !in_s;
-		else if (c == '"' && !in_s)
+		else if (data->line[*i] == '\"' && !in_s)
 			in_d = !in_d;
 		(*i)++;
 	}
 	if (in_s || in_d)
-	{
-		print_syntax_error("unclosed quote");
 		return (NULL);
-	}
-	token = ft_substr(data->line, start, *i - start);
-	// inclut tout,quotes comprises
-	return (token);
+	return (ft_substr(data->line, start, *i - start));
+}
+
+char	*extract_token(t_data *data, int *i)
+{
+	skip_spaces(data, i);
+	if (!data->line[*i])
+		return (NULL);
+	if (get_operator_len(&data->line[*i]) > 0)
+		return (extract_operator(data, i));
+	return (extract_word(data, i));
 }

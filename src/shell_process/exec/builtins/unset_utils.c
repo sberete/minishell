@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   unset_utils.c                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/15 01:35:00 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/15 01:32:43 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/15 14:26:30 by sxrimu           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,6 +30,34 @@ int	unset_is_valid_name(char *s)
 		i++;
 	}
 	return (1);
+}
+
+static int	env_remove(t_env **lst, char *key)
+{
+	t_env	*cur;
+	t_env	*prev;
+
+	if (!lst || !*lst || !key)
+		return (-1);
+	prev = NULL;
+	cur = *lst;
+	while (cur)
+	{
+		if (ft_strcmp(cur->key, key) == 0)
+		{
+			if (prev)
+				prev->next = cur->next;
+			else
+				*lst = cur->next;
+			free(cur->key);
+			free(cur->value);
+			free(cur);
+			return (0);
+		}
+		prev = cur;
+		cur = cur->next;
+	}
+	return (-1);
 }
 
 int	unset_remove_key(t_env **env, char *name)

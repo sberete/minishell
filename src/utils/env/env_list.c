@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   env_list.c                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/15 02:01:15 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/15 02:11:26 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/15 14:46:13 by sxrimu           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,41 +48,4 @@ void	env_add_back(t_env **lst, t_env *node)
 	cur->next = node;
 }
 
-t_env	*env_find(t_env *lst, char *key)
-{
-	while (lst)
-	{
-		if (ft_strcmp(lst->key, key) == 0)
-			return (lst);
-		lst = lst->next;
-	}
-	return (NULL);
-}
 
-int	env_remove(t_env **lst, char *key)
-{
-	t_env	*cur;
-	t_env	*prev;
-
-	if (!lst || !*lst || !key)
-		return (-1);
-	prev = NULL;
-	cur = *lst;
-	while (cur)
-	{
-		if (ft_strcmp(cur->key, key) == 0)
-		{
-			if (prev)
-				prev->next = cur->next;
-			else
-				*lst = cur->next;
-			free(cur->key);
-			free(cur->value);
-			free(cur);
-			return (0);
-		}
-		prev = cur;
-		cur = cur->next;
-	}
-	return (-1);
-}

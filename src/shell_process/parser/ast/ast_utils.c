@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ast_utils.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:52:13 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/14 22:37:55 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/15 17:57:23 by sxrimu           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,27 +63,37 @@ bool	add_arg(t_ast *cmd, char *s, bool can_expand)
 	return (true);
 }
 
-t_redir	*new_redir(t_redir_type type, char *filename, char *delim,
-		bool filename_can_expand, bool delim_can_expand)
+#include "minishell.h"
+
+t_redir	*new_redir(t_redir_type type, char *text, bool can_exp)
 {
 	t_redir	*r;
 
 	r = (t_redir *)malloc(sizeof(t_redir));
 	if (!r)
-	{
-		free(filename);
-		free(delim);
 		return (NULL);
-	}
 	r->type = type;
-	r->filename = filename;
-	r->delim = delim;
 	r->fd = -1;
-	r->filename_can_expand = filename_can_expand;
-	r->delim_can_expand = delim_can_expand;
 	r->next = NULL;
+
+	r->filename = NULL;
+	r->delim = NULL;
+	r->filename_can_expand = false;
+	r->delim_can_expand = false;
+
+	if (type == REDIR_HEREDOC)
+	{
+		r->delim = text;
+		r->delim_can_expand = can_exp;
+	}
+	else
+	{
+		r->filename = text;
+		r->filename_can_expand = can_exp;
+	}
 	return (r);
 }
+
 
 void	add_redir(t_ast *cmd_node, t_redir *redir)
 {

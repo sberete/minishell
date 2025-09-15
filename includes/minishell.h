@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   minishell.h                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:46:06 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/15 02:18:46 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/15 18:02:43 by sxrimu           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -153,12 +153,10 @@ int	read_input(t_data *data);
 t_ast							*new_ast_node(t_node_type type);
 bool	add_arg(t_ast *cmd, char *s, bool can_expand);
 
-t_redir							*new_redir(t_redir_type type, char *filename,
-									char *delim, bool filename_can_expand,
-									bool delim_can_expand);
+t_redir	*new_redir(t_redir_type type, char *text, bool can_exp);
+
 void							add_redir(t_ast *cmd_node, t_redir *redir);
 t_ast							*parse_sequence(t_token **tokens);
-t_token							*parse_redirection(t_ast *cmd, t_token *tok);
 void							print_ast(t_ast *node, int depth);
 void							free_ast(t_ast *node);
 
@@ -176,9 +174,6 @@ int								apply_redirections(t_redir *rlist);
 int								save_stdio(int *saved_in, int *saved_out);
 void							restore_stdio(int saved_in, int saved_out);
 int								dup2_and_close(int from, int to);
-
-/* expansion */
-char							*ms_expand_vars(char *s, t_data *data);
 
 /* ========= BUILT-IN UTILS ========= */
 int								str_eq(char *a, char *b);
@@ -203,7 +198,6 @@ int								builtin_exit(t_data *d, char **av);
 t_env							*env_new(char *key, char *value);
 void							env_add_back(t_env **lst, t_env *node);
 t_env							*env_find(t_env *lst, char *key);
-int								env_remove(t_env **lst, char *key);
 void							free_env(t_env **lst);
 
 /* ========= ENV: bootstrap (envp <-> list) ========= */
@@ -243,5 +237,28 @@ int	unset_is_valid_name(char *s);
 void	print_env(t_env *lst);
 int	unset_remove_key(t_env **env, char *name);
 int	export_set_assignment(t_env **lst, char *assign);
+/* expansion — commun */
+void  quote_step(char c, int *in_s, int *in_d);
+char *str_append_free(char *dst, const char *src);
+char *substr_dup(const char *s, size_t pos, size_t len);
+
+/* expansion — variables */
+int     var_name_start(char c);
+int     var_name_char(char c);
+size_t  var_name_len(const char *s, size_t pos);
+char   *var_value_dup(const char *name, t_data *data);
+char   *ms_expand_vars(const char *s, t_data *data);
+char  **expand_argv_vars(char **argv, bool *can_expand, t_data *data);
+
+/* expansion — glob */
+int     pattern_has_star(const char *s);
+int     glob_match_name(const char *name, const char *pat);
+void    str_array_insertion_sort(char **arr, size_t n);
+char  **expand_argv_glob(char **argv);
+/* redirs */
+t_redir *new_redir(t_redir_type type, char *text, bool can_exp);
+
+/* parser redirection: consomme op + WORD, avance *tokp, 0=OK, 1=err */
+int     parse_redirection(t_ast *cmd, t_token **tokp);
 
 #endif /* MINISHELL_H */

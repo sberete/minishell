@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   print_tokens.c                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:50:16 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/15 01:22:24 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/15 17:37:28 by sxrimu           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,7 +47,7 @@ void	print_tokens(t_token *t)
 	char	*type;
 	char	*exp;
 
-	printf("Tokens extraits :");
+	printf("Tokens extraits :\n");
 	while (t)
 	{
 		val = t->value;

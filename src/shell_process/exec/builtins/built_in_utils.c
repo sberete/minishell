@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   built_in_utils.c                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/15 01:26:12 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/15 01:26:57 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/15 14:46:54 by sxrimu           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,47 +31,45 @@ int	builtin_argc(char **argv)
 	return (n);
 }
 
-void	builtin_err(char *cmd, char *msg)
+t_env	*env_find(t_env *lst, char *key)
 {
-	char	*c;
-	char	*m;
-
-	c = cmd;
-	if (!c)
-		c = "(null)";
-	m = msg;
-	if (!m)
-		m = "";
-	ft_putstr_fd("minishell: ", STDERR_FILENO);
-	ft_putstr_fd((char *)c, STDERR_FILENO);
-	ft_putstr_fd(": ", STDERR_FILENO);
-	ft_putstr_fd((char *)m, STDERR_FILENO);
-	ft_putstr_fd("\n", STDERR_FILENO);
+	while (lst)
+	{
+		if (ft_strcmp(lst->key, key) == 0)
+			return (lst);
+		lst = lst->next;
+	}
+	return (NULL);
 }
 
-void	builtin_err_arg(char *cmd, char *arg, char *msg)
+/* set: crée si absent, remplace si overwrite=1 */
+int	env_set(t_env **lst, char *key, char *value, int overwrite)
 {
-	char	*c;
-	char	*a;
-	char	*m;
+	t_env	*cur;
+	char	*dup;
 
-	c = cmd;
-	if (!c)
-		c = "(null)";
-	a = arg;
-	if (!a)
-		a = "(null)";
-	m = msg;
-	if (!m)
-		m = "";
-	ft_putstr_fd("minishell: ", STDERR_FILENO);
-	ft_putstr_fd((char *)c, STDERR_FILENO);
-	ft_putstr_fd(": `", STDERR_FILENO);
-	ft_putstr_fd((char *)a, STDERR_FILENO);
-	ft_putstr_fd("': ", STDERR_FILENO);
-	ft_putstr_fd((char *)m, STDERR_FILENO);
-	ft_putstr_fd("\n", STDERR_FILENO);
+	if (!lst || !key || !value)
+		return (-1);
+	cur = env_find(*lst, key);
+	if (!cur)
+	{
+		cur = env_new(key, value);
+		if (!cur)
+			return (-1);
+		env_add_back(lst, cur);
+		return (0);
+	}
+	if (!overwrite)
+		return (0);
+	dup = ft_strdup(value);
+	if (!dup)
+		return (-1);
+	free(cur->value);
+	cur->value = dup;
+	return (0);
 }
+
+
 
 int	builtin_is_numeric(char *s)
 {

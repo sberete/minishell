@@ -3,59 +3,59 @@
 /*                                                        :::      ::::::::   */
 /*   ast.c                                              :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:52:08 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/14 23:01:38 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/15 18:04:20 by sxrimu           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-static int	cmd_accepts_stop(t_token_type t)
+static int	is_ctrl_token(t_token_type t)
 {
-	return (t == T_AND || t == T_OR || t == T_PIPE || t == T_SEPARATOR
-		|| t == T_PAREN_CLOSE || t == T_END);
+	if (t == T_PIPE)        return (1);
+	if (t == T_AND)         return (1);
+	if (t == T_OR)          return (1);
+	if (t == T_SEPARATOR)   return (1);
+	if (t == T_PAREN_CLOSE) return (1);
+	if (t == T_END)         return (1);
+	return (0);
 }
 
-static t_ast	*parse_command(t_token **tokens)
+static t_ast	*parse_command(t_token **tokp)
 {
 	t_ast	*cmd;
-	t_token	*tok;
-	int		have_any;
+	t_token	*t;
 
+	if (!tokp || !*tokp)
+		return (NULL);
 	cmd = new_ast_node(NODE_CMD);
 	if (!cmd)
 		return (NULL);
-	have_any = 0;
-	tok = *tokens;
-	while (tok && !cmd_accepts_stop(tok->type))
+	t = *tokp;
+	while (t && !is_ctrl_token(t->type))
 	{
-		if (tok->type == T_WORD || tok->type == T_WILDCARD)
+		if (t->type == T_WORD)
 		{
-			if (!add_arg(cmd, tok->value, tok->can_expand))
+			if (!add_arg(cmd, t->value, t->can_expand))
 				return (free_ast(cmd), NULL);
-			*tokens = tok->next;
-			tok = *tokens;
-			have_any = 1;
+			t = t->next;
 			continue ;
 		}
-		if (tok->type == T_REDIR_IN || tok->type == T_REDIR_OUT
-			|| tok->type == T_APPEND || tok->type == T_HEREDOC)
+		if (t->type == T_REDIR_IN || t->type == T_REDIR_OUT
+		 || t->type == T_APPEND  || t->type == T_HEREDOC)
 		{
-			tok = parse_redirection(cmd, tok);
-			if (!tok)
+			if (parse_redirection(cmd, &t) != 0)
 				return (free_ast(cmd), NULL);
-			*tokens = tok;
-			have_any = 1;
 			continue ;
 		}
-		break ;
-	}
-	if (!have_any)
 		return (free_ast(cmd), NULL);
+	}
+	*tokp = t;
 	return (cmd);
 }
+
 
 static t_ast	*parse_group(t_token **tokens)
 {

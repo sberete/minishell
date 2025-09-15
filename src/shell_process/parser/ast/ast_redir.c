@@ -3,64 +3,63 @@
 /*                                                        :::      ::::::::   */
 /*   ast_redir.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:52:15 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/14 22:09:51 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/15 18:16:45 by sxrimu           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
+#include "minishell.h"
+
 static int	is_redir_op(t_token_type t)
 {
-	return (t == T_REDIR_IN || t == T_REDIR_OUT || t == T_APPEND
-		|| t == T_HEREDOC);
+	if (t == T_REDIR_IN)  return (1);
+	if (t == T_REDIR_OUT) return (1);
+	if (t == T_APPEND)    return (1);
+	if (t == T_HEREDOC)   return (1);
+	return (0);
 }
 
-t_token	*parse_redirection(t_ast *cmd, t_token *tok)
+/* *tokp pointe sur l'opérateur ; on consomme aussi le WORD suivant */
+int	parse_redirection(t_ast *cmd, t_token **tokp)
 {
-	t_redir_type	rtype;
+	t_token			*op;
 	t_token			*arg;
+	t_redir_type	rtype;
+	char			*dup;
 	t_redir			*r;
-	char			*fname;
-	char			*delim;
 
-	if (!cmd || !tok || !is_redir_op(tok->type))
-		return (NULL);
-	if (tok->type == T_REDIR_IN)
+	if (!cmd || !tokp || !*tokp)
+		return (1);
+	op = *tokp;
+	if (!is_redir_op(op->type))
+		return (1);
+	arg = op->next;
+	if (!arg || arg->type != T_WORD)
+		return (1);
+	if (op->type == T_REDIR_IN)
 		rtype = REDIR_IN;
-	else if (tok->type == T_REDIR_OUT)
+	else if (op->type == T_REDIR_OUT)
 		rtype = REDIR_OUT;
-	else if (tok->type == T_APPEND)
+	else if (op->type == T_APPEND)
 		rtype = REDIR_APPEND;
 	else
 		rtype = REDIR_HEREDOC;
-	tok = tok->next;
-	arg = tok;
-	if (!arg || (arg->type != T_WORD && arg->type != T_WILDCARD))
-		return (NULL);
-	if (rtype == REDIR_HEREDOC)
+	dup = ft_strdup(arg->value);
+	if (!dup)
+		return (1);
+	r = new_redir(rtype, dup, arg->can_expand);
+	if (!r)
 	{
-		delim = ft_strdup(arg->value);
-		if (!delim)
-			return (NULL);
-		r = new_redir(rtype, NULL, delim, false, arg->can_expand);
-		if (!r)
-			return (NULL);
-	}
-	else
-	{
-		fname = ft_strdup(arg->value);
-		if (!fname)
-			return (NULL);
-		r = new_redir(rtype, fname, NULL, arg->can_expand, false);
-		if (!r)
-		{
-			free(fname);
-			return (NULL);
-		}
+		free(dup);
+		return (1);
 	}
 	add_redir(cmd, r);
-	return (arg->next);
+	*tokp = arg->next;
+	return (0);
 }
+
+

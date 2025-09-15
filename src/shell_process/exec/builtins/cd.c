@@ -6,12 +6,11 @@
 /*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/14 22:40:19 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/15 01:32:10 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/15 22:20:06 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
-#include <unistd.h>
 
 static int	set_env_key(t_data *d, char *k, char *v)
 {

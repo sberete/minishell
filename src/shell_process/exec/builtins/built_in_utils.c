@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   built_in_utils.c                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/15 01:26:12 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/15 14:46:54 by sxrimu           ###   ########.fr       */
+/*   Updated: 2025/09/15 22:19:56 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,8 +68,6 @@ int	env_set(t_env **lst, char *key, char *value, int overwrite)
 	cur->value = dup;
 	return (0);
 }
-
-
 
 int	builtin_is_numeric(char *s)
 {

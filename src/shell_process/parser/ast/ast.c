@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ast.c                                              :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:52:08 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/15 18:04:20 by sxrimu           ###   ########.fr       */
+/*   Updated: 2025/09/15 22:22:09 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,12 +14,18 @@
 
 static int	is_ctrl_token(t_token_type t)
 {
-	if (t == T_PIPE)        return (1);
-	if (t == T_AND)         return (1);
-	if (t == T_OR)          return (1);
-	if (t == T_SEPARATOR)   return (1);
-	if (t == T_PAREN_CLOSE) return (1);
-	if (t == T_END)         return (1);
+	if (t == T_PIPE)
+		return (1);
+	if (t == T_AND)
+		return (1);
+	if (t == T_OR)
+		return (1);
+	if (t == T_SEPARATOR)
+		return (1);
+	if (t == T_PAREN_CLOSE)
+		return (1);
+	if (t == T_END)
+		return (1);
 	return (0);
 }
 
@@ -44,7 +50,7 @@ static t_ast	*parse_command(t_token **tokp)
 			continue ;
 		}
 		if (t->type == T_REDIR_IN || t->type == T_REDIR_OUT
-		 || t->type == T_APPEND  || t->type == T_HEREDOC)
+			|| t->type == T_APPEND || t->type == T_HEREDOC)
 		{
 			if (parse_redirection(cmd, &t) != 0)
 				return (free_ast(cmd), NULL);
@@ -55,7 +61,6 @@ static t_ast	*parse_command(t_token **tokp)
 	*tokp = t;
 	return (cmd);
 }
-
 
 static t_ast	*parse_group(t_token **tokens)
 {

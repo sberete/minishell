@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   env_list.c                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/15 02:01:15 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/15 14:46:13 by sxrimu           ###   ########.fr       */
+/*   Updated: 2025/09/15 22:23:32 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,5 +47,3 @@ void	env_add_back(t_env **lst, t_env *node)
 		cur = cur->next;
 	cur->next = node;
 }
-
-

@@ -3,27 +3,28 @@
 /*                                                        :::      ::::::::   */
 /*   ast_redir.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:52:15 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/15 18:16:45 by sxrimu           ###   ########.fr       */
+/*   Updated: 2025/09/15 22:21:15 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-#include "minishell.h"
-
 static int	is_redir_op(t_token_type t)
 {
-	if (t == T_REDIR_IN)  return (1);
-	if (t == T_REDIR_OUT) return (1);
-	if (t == T_APPEND)    return (1);
-	if (t == T_HEREDOC)   return (1);
+	if (t == T_REDIR_IN)
+		return (1);
+	if (t == T_REDIR_OUT)
+		return (1);
+	if (t == T_APPEND)
+		return (1);
+	if (t == T_HEREDOC)
+		return (1);
 	return (0);
 }
 
-/* *tokp pointe sur l'opérateur ; on consomme aussi le WORD suivant */
 int	parse_redirection(t_ast *cmd, t_token **tokp)
 {
 	t_token			*op;
@@ -61,5 +62,3 @@ int	parse_redirection(t_ast *cmd, t_token **tokp)
 	*tokp = arg->next;
 	return (0);
 }
-
-

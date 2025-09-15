@@ -6,16 +6,16 @@
 /*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/15 02:01:32 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/15 02:01:36 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/15 22:29:08 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-static int	split_kv(const char *line, char **out_k, char **out_v)
+static int	split_kv(char *line, char **out_k, char **out_v)
 {
-	const char	*eq;
-	size_t		kl;
+	char	*eq;
+	size_t	kl;
 
 	if (!line || !out_k || !out_v)
 		return (-1);
@@ -37,7 +37,7 @@ static int	split_kv(const char *line, char **out_k, char **out_v)
 	return (0);
 }
 
-static char	*str_join3(const char *a, const char *b, const char *c)
+static char	*str_join3(char *a, char *b, char *c)
 {
 	size_t	la;
 	size_t	lb;
@@ -104,7 +104,7 @@ char	**env_list_to_envp(t_env *lst)
 	t_env	*cur;
 	char	**out;
 	char	*line;
-	const char *valptr;
+	char	*valptr;
 
 	n = 0;
 	cur = lst;
@@ -136,4 +136,3 @@ char	**env_list_to_envp(t_env *lst)
 	out[i] = NULL;
 	return (out);
 }
-

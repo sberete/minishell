@@ -6,7 +6,7 @@
 /*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/07 17:56:28 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/14 23:28:29 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/16 01:30:59 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,7 +36,7 @@ int	shell_process(t_data *data)
 		return (1);
 	}
 	print_ast(data->ast, 0);
-	// exec_ast(data->ast, data);
+	exec_ast(data->ast, data);
 	free_ast(data->ast);
 	data->ast = NULL;
 	return (0);

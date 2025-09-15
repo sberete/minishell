@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   minishell.h                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:46:06 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/15 18:02:43 by sxrimu           ###   ########.fr       */
+/*   Updated: 2025/09/16 01:46:38 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -147,13 +147,14 @@ void							free_token_list(t_token **head);
 void							print_syntax_error(char *msg);
 void							free_data(t_data *data);
 void							free_data_tmp(t_data *data);
-int	read_input(t_data *data);
+int								read_input(t_data *data);
 
 /* ========= AST ========= */
 t_ast							*new_ast_node(t_node_type type);
-bool	add_arg(t_ast *cmd, char *s, bool can_expand);
+bool							add_arg(t_ast *cmd, char *s, bool can_expand);
 
-t_redir	*new_redir(t_redir_type type, char *text, bool can_exp);
+t_redir							*new_redir(t_redir_type type, char *text,
+									bool can_exp);
 
 void							add_redir(t_ast *cmd_node, t_redir *redir);
 t_ast							*parse_sequence(t_token **tokens);
@@ -168,8 +169,6 @@ int								prepare_one_heredoc(t_redir *r, t_data *data);
 int								prepare_all_heredocs(t_ast *node, t_data *data);
 
 /* redirections (à appliquer dans le child juste avant exec) */
-int								apply_redirections(t_redir *rlist);
-
 /* stdio save/restore + dup util */
 int								save_stdio(int *saved_in, int *saved_out);
 void							restore_stdio(int saved_in, int saved_out);
@@ -179,8 +178,8 @@ int								dup2_and_close(int from, int to);
 int								str_eq(char *a, char *b);
 int								builtin_argc(char **argv);
 void							builtin_err(char *cmd, char *msg);
-void							builtin_err_arg(char *cmd,
-									char *arg, char *msg);
+void							builtin_err_arg(char *cmd, char *arg,
+									char *msg);
 int								builtin_is_numeric(char *s);
 
 /* ========= BUILT-INS ========= */
@@ -209,8 +208,8 @@ int								id_is_valid(char *s);
 int								parse_assignment(char *s, char **key,
 									char **val, int *append);
 char							*env_get(t_env *lst, char *key);
-int								env_set(t_env **lst, char *key,
-									char *value, int overwrite);
+int								env_set(t_env **lst, char *key, char *value,
+									int overwrite);
 int								env_append(t_env **lst, char *key,
 									char *suffix);
 
@@ -233,32 +232,76 @@ int								set_signal_dfl(int signum);
 /* ========= MISC ========= */
 t_data							data_init(int argc, char **argv, char **envp);
 int								shell_process(t_data *data);
-int	unset_is_valid_name(char *s);
-void	print_env(t_env *lst);
-int	unset_remove_key(t_env **env, char *name);
-int	export_set_assignment(t_env **lst, char *assign);
+int								unset_is_valid_name(char *s);
+void							print_env(t_env *lst);
+int								unset_remove_key(t_env **env, char *name);
+int								export_set_assignment(t_env **lst,
+									char *assign);
 /* expansion — commun */
-void  quote_step(char c, int *in_s, int *in_d);
-char *str_append_free(char *dst, const char *src);
-char *substr_dup(const char *s, size_t pos, size_t len);
+void							quote_step(char c, int *in_s, int *in_d);
+char							*str_append_free(char *dst, const char *src);
+char							*substr_dup(const char *s, size_t pos,
+									size_t len);
 
 /* expansion — variables */
-int     var_name_start(char c);
-int     var_name_char(char c);
-size_t  var_name_len(const char *s, size_t pos);
-char   *var_value_dup(const char *name, t_data *data);
-char   *ms_expand_vars(const char *s, t_data *data);
-char  **expand_argv_vars(char **argv, bool *can_expand, t_data *data);
+int								var_name_start(char c);
+int								var_name_char(char c);
+size_t							var_name_len(const char *s, size_t pos);
+char							*var_value_dup(const char *name, t_data *data);
+char							*ms_expand_vars(const char *s, t_data *data);
+char							**expand_argv_vars(char **argv,
+									bool *can_expand, t_data *data);
 
 /* expansion — glob */
-int     pattern_has_star(const char *s);
-int     glob_match_name(const char *name, const char *pat);
-void    str_array_insertion_sort(char **arr, size_t n);
-char  **expand_argv_glob(char **argv);
+int								pattern_has_star(const char *s);
+int								glob_match_name(const char *name,
+									const char *pat);
+void							str_array_insertion_sort(char **arr, size_t n);
+char							**expand_argv_glob(char **argv);
 /* redirs */
-t_redir *new_redir(t_redir_type type, char *text, bool can_exp);
+t_redir							*new_redir(t_redir_type type, char *text,
+									bool can_exp);
 
 /* parser redirection: consomme op + WORD, avance *tokp, 0=OK, 1=err */
-int     parse_redirection(t_ast *cmd, t_token **tokp);
+int								parse_redirection(t_ast *cmd, t_token **tokp);
+char	*hd_strip_outer_quotes(char *s);
+char	*heredoc_expand_line(char *line, t_data *data);
+int	save_stdio(int *saved_in, int *saved_out);
+void	restore_stdio(int saved_in, int saved_out);
+int	wait_and_get_status(pid_t pid);
+int	run_subshell(t_ast *sub, t_data *data);
+void	update_exit_from_wait(int st);
+/* ========= EXEC / REDIRS / PATH ========= */
+/* redirections complètes (appliquées dans le child) */
+int     apply_redirs(t_redir *rlist);  /* tu l’as déjà, garde ce nom */
+
+/* redirect stdio (before exec), simple helper */
+int     redirect_io(int in_fd, int out_fd);
+
+/* recherche du binaire dans PATH (liste chaînée env) */
+char    *find_cmd_path(const char *name, t_env *env);
+
+/* ========= EXPANSION (argv + redirs) ========= */
+int     expand_redirs_inplace(t_redir *rlist, t_data *data);
+
+/* renvoie un **NOUVEAU** argv expansé (vars + glob), NULL-terminé */
+char    **expand_argv_full(t_ast *cmd, t_data *data);
+
+/* ========= UTILS tableaus ========= */
+char	**expand_argv_glob(char **argv);
+int	pattern_has_star(const char *s);
+int	glob_match_name(const char *name, const char *pat);
+void	str_array_insertion_sort(char **arr, size_t n);
+char	*ms_expand_vars(const char *s, t_data *data);
+char	**expand_argv_vars(char **argv, bool *can_expand, t_data *data);
+int	var_name_start(char c);
+int	var_name_char(char c);
+size_t	var_name_len(const char *s, size_t pos);
+char	*var_value_dup(const char *name, t_data *data);
+char	*env_get(t_env *lst, char *key);
+void	quote_step(char c, int *in_s, int *in_d);
+char	*str_append_free(char *dst, const char *src);
+char	*substr_dup(const char *s, size_t pos, size_t len);
+int expand_redirs_inplace(t_redir *r, t_data *data);
 
 #endif /* MINISHELL_H */

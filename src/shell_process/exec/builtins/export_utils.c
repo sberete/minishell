@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   export_utils.c                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/15 01:42:05 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/15 14:47:02 by sxrimu           ###   ########.fr       */
+/*   Updated: 2025/09/15 22:20:35 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -103,7 +103,7 @@ int	id_is_valid(char *s)
 int	parse_assignment(char *s, char **key, char **val, int *append)
 {
 	char	*p;
-	size_t		klen;
+	size_t	klen;
 
 	if (!s || !key || !val || !append)
 		return (-1);

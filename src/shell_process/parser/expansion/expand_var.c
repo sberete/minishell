@@ -112,3 +112,33 @@ char	**expand_argv_vars(char **argv, bool *can_expand, t_data *data)
 	out[n] = NULL;
 	return (out);
 }
+#include "minishell.h"
+
+/* Expand in-place filename/delim selon les flags *_can_expand */
+int expand_redirs_inplace(t_redir *r, t_data *data)
+{
+    for (; r; r = r->next)
+    {
+        if (r->type == REDIR_HEREDOC)
+        {
+            if (r->delim && r->delim_can_expand)
+            {
+                char *e = ms_expand_vars(r->delim, data);
+                if (!e) return -1;
+                free(r->delim);
+                r->delim = e;
+            }
+        }
+        else
+        {
+            if (r->filename && r->filename_can_expand)
+            {
+                char *e = ms_expand_vars(r->filename, data);
+                if (!e) return -1;
+                free(r->filename);
+                r->filename = e;
+            }
+        }
+    }
+    return 0;
+}

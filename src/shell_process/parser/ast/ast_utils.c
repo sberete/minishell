@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ast_utils.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:52:13 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/15 17:57:23 by sxrimu           ###   ########.fr       */
+/*   Updated: 2025/09/15 22:22:01 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,12 +75,10 @@ t_redir	*new_redir(t_redir_type type, char *text, bool can_exp)
 	r->type = type;
 	r->fd = -1;
 	r->next = NULL;
-
 	r->filename = NULL;
 	r->delim = NULL;
 	r->filename_can_expand = false;
 	r->delim_can_expand = false;
-
 	if (type == REDIR_HEREDOC)
 	{
 		r->delim = text;
@@ -93,7 +91,6 @@ t_redir	*new_redir(t_redir_type type, char *text, bool can_exp)
 	}
 	return (r);
 }
-
 
 void	add_redir(t_ast *cmd_node, t_redir *redir)
 {

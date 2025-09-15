@@ -3,15 +3,14 @@
 /*                                                        :::      ::::::::   */
 /*   expand_wildcard.c                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:51:16 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/15 15:12:20 by sxrimu           ###   ########.fr       */
+/*   Updated: 2025/09/15 22:24:25 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
-#include <dirent.h>
 
 /* renvoie un tableau trié des matches du motif dans le répertoire courant */
 static char	**glob_collect_matches(const char *pat, size_t *out_n)
@@ -22,6 +21,7 @@ static char	**glob_collect_matches(const char *pat, size_t *out_n)
 	size_t			cap;
 	size_t			n;
 	char			*dup;
+	char			**tmp;
 
 	*out_n = 0;
 	d = opendir(".");
@@ -42,7 +42,7 @@ static char	**glob_collect_matches(const char *pat, size_t *out_n)
 		{
 			if (n == cap)
 			{
-				char **tmp = (char **)malloc(sizeof(char *) * (cap * 2));
+				tmp = (char **)malloc(sizeof(char *) * (cap * 2));
 				if (!tmp)
 					break ;
 				ft_memcpy(tmp, arr, sizeof(char *) * n);
@@ -79,6 +79,9 @@ char	**expand_argv_glob(char **argv)
 	size_t	cap;
 	char	**matches;
 	size_t	mc;
+	char	**tmp;
+	size_t	k;
+	char	**tmp2;
 
 	if (!argv)
 		return (NULL);
@@ -101,7 +104,7 @@ char	**expand_argv_glob(char **argv)
 		{
 			if (n_out + 1 >= cap)
 			{
-				char **tmp = (char **)malloc(sizeof(char *) * (cap * 2));
+				tmp = (char **)malloc(sizeof(char *) * (cap * 2));
 				if (!tmp)
 					return (/* leak minimal */ out);
 				ft_memcpy(tmp, out, sizeof(char *) * n_out);
@@ -116,12 +119,12 @@ char	**expand_argv_glob(char **argv)
 		}
 		else
 		{
-			size_t k = 0;
+			k = 0;
 			while (k < mc)
 			{
 				if (n_out + 1 >= cap)
 				{
-					char **tmp2 = (char **)malloc(sizeof(char *) * (cap * 2));
+					tmp2 = (char **)malloc(sizeof(char *) * (cap * 2));
 					if (!tmp2)
 						return (out);
 					ft_memcpy(tmp2, out, sizeof(char *) * n_out);

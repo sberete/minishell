@@ -42,7 +42,8 @@ static int	match_star_rec(const char *name, const char *pat)
 	return (0);
 }
 
-/* règle des dotfiles: si motif ne commence pas par '.', on ne matche pas les noms '.' */
+/* règle des dotfiles: si motif ne commence pas par '.',
+	on ne matche pas les noms '.' */
 int	glob_match_name(const char *name, const char *pat)
 {
 	if (!name || !pat)

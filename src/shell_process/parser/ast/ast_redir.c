@@ -3,23 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ast_redir.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:52:15 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/14 19:25:51 by sxrimu           ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
-#include "minishell.h"
-
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   ast_redir.c                                        :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+ +:+         +:+     */
-/*   Created: 2025/08/25 21:52:15 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/14 22:35:00 by sxrimu           ###   ########.fr       */
+/*   Updated: 2025/09/14 22:09:51 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,13 +14,10 @@
 
 static int	is_redir_op(t_token_type t)
 {
-	return (t == T_REDIR_IN || t == T_REDIR_OUT
-		|| t == T_APPEND || t == T_HEREDOC);
+	return (t == T_REDIR_IN || t == T_REDIR_OUT || t == T_APPEND
+		|| t == T_HEREDOC);
 }
 
-/* Consomme:  <op> <WORD>
- * Renvoie le token suivant après l'argument, ou NULL en cas d'erreur.
- * Pas de printf ici : l'appelant gère l'erreur. */
 t_token	*parse_redirection(t_ast *cmd, t_token *tok)
 {
 	t_redir_type	rtype;
@@ -61,9 +45,7 @@ t_token	*parse_redirection(t_ast *cmd, t_token *tok)
 		delim = ft_strdup(arg->value);
 		if (!delim)
 			return (NULL);
-		r = new_redir(rtype, NULL, delim,
-				false,                /* filename_can_expand: N/A */
-				arg->can_expand);     /* heredoc: suit le flag du token */
+		r = new_redir(rtype, NULL, delim, false, arg->can_expand);
 		if (!r)
 			return (NULL);
 	}
@@ -72,9 +54,7 @@ t_token	*parse_redirection(t_ast *cmd, t_token *tok)
 		fname = ft_strdup(arg->value);
 		if (!fname)
 			return (NULL);
-		r = new_redir(rtype, fname, NULL,
-				arg->can_expand,      /* filename expand ? */
-				false);               /* delim: N/A */
+		r = new_redir(rtype, fname, NULL, arg->can_expand, false);
 		if (!r)
 		{
 			free(fname);

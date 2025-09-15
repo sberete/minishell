@@ -6,7 +6,7 @@
 /*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:47:47 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/07 15:29:42 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/15 01:51:54 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,5 +35,5 @@ void	free_data(t_data *data)
 	if (!data)
 		return ;
 	free_data_tmp(data);
-	env_clear(&data->env);
+	free_env(&data->env);
 }

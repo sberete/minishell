@@ -3,37 +3,34 @@
 /*                                                        :::      ::::::::   */
 /*   unset.c                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/10 19:45:00 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/10 19:23:56 by sxrimu           ###   ########.fr       */
+/*   Updated: 2025/09/15 01:25:10 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
-#include <unistd.h>
 
-int ft_unset(char **argv, t_data *data)
+int	builtin_unset(t_data *data, char **argv)
 {
-	int i;
-	int status;
+	int	i;
+	int	status;
 
-	status = 0;
+	if (!argv || !argv[1])
+		return (0);
 	i = 1;
+	status = 0;
 	while (argv[i])
 	{
-		if (!id_is_valid(argv[i]))
+		if (!unset_is_valid_name(argv[i]))
 		{
-			ft_putstr_fd("minishell: unset: `", STDERR_FILENO);
-			ft_putstr_fd(argv[i], STDERR_FILENO);
-			ft_putstr_fd("': not a valid identifier\n", STDERR_FILENO);
+			builtin_err_arg("unset", argv[i], "not a valid identifier");
 			status = 1;
 		}
-		else
-		{
-			env_remove(&data->env, argv[i]);
-		}
+		else if (unset_remove_key(&data->env, argv[i]) != 0)
+			status = 1;
 		i++;
 	}
-	return status;
+	return (status);
 }

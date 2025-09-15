@@ -3,17 +3,18 @@
 /*                                                        :::      ::::::::   */
 /*   signal.c                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/05 19:29:06 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/10 19:45:01 by sxrimu           ###   ########.fr       */
+/*   Updated: 2025/09/14 22:26:20 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
 /* Handler parent au prompt: efface la ligne et passe à la ligne.
-   PAS de rl_redisplay, PAS de rl_done -> readline réaffichera un seul prompt. */
+   PAS de rl_redisplay, PAS de rl_done
+	-> readline réaffichera un seul prompt. */
 /* Parent au prompt: coupe immédiatement la readline courante */
 /* ----- Parent pendant un heredoc child: on ignore ^C/^\. */
 // static void	parent_sigint(int signo)
@@ -34,7 +35,8 @@
 // 	rl_redisplay();
 // }
 
-// /* À appeler avant la boucle readline() et après un exec/wait pour rétablir */
+//
+	/* À appeler avant la boucle readline() et après un exec/wait pour rétablir */
 // void	signals_setup_parent(void)
 // {
 // 	/* SA_RESTART rend readline plus robuste ; ok avec GNU Readline */
@@ -85,7 +87,7 @@ void	signals_setup_parent(void)
 
 void	signals_setup_child(void)
 {
-	struct sigaction	sa;
+	struct sigaction sa;
 
 	sigemptyset(&sa.sa_mask);
 	sa.sa_flags = 0;

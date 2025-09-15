@@ -3,16 +3,14 @@
 /*                                                        :::      ::::::::   */
 /*   lexer_utils.c                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:52:29 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/14 17:57:48 by sxrimu           ###   ########.fr       */
+/*   Updated: 2025/09/14 23:03:01 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
-
-/* -------- helpers internes ----------------------------------------------- */
 
 static bool	is_fully_single_quoted(const char *s)
 {
@@ -21,13 +19,11 @@ static bool	is_fully_single_quoted(const char *s)
 	if (!s)
 		return (false);
 	len = ft_strlen(s);
-	while (len && (s[len - 1] == ' ' || s[len - 1] == '\t'
-			|| s[len - 1] == '\n' || s[len - 1] == '\r'))
+	while (len && (s[len - 1] == ' ' || s[len - 1] == '\t' || s[len - 1] == '\n'
+			|| s[len - 1] == '\r'))
 		len--;
 	return (len >= 2 && s[0] == '\'' && s[len - 1] == '\'');
 }
-
-/* -------- API utils lexer ------------------------------------------------ */
 
 t_token	*new_token_node(char *value_own)
 {
@@ -39,7 +35,7 @@ t_token	*new_token_node(char *value_own)
 		free(value_own);
 		return (NULL);
 	}
-	n->value = value_own; /* ownership: pas de strdup */
+	n->value = value_own;
 	n->type = get_token_type(n->value);
 	n->can_expand = (n->type == T_WORD) && !is_fully_single_quoted(n->value);
 	n->next = NULL;

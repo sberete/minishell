@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   shell_process.c                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/07 17:56:28 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/10 21:35:53 by sxrimu           ###   ########.fr       */
+/*   Updated: 2025/09/14 23:28:29 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,7 @@ int	shell_process(t_data *data)
 			free_token_list(&data->tokens);
 		return (1);
 	}
-	// print_tokens(data->tokens);
+	print_tokens(data->tokens);
 	head = data->tokens;
 	cur = head;
 	data->ast = parse_sequence(&cur);
@@ -35,10 +35,8 @@ int	shell_process(t_data *data)
 		print_syntax_error("parser");
 		return (1);
 	}
-	// print_ast(data->ast, 0);
-	/* même si l'exec/expand est commenté, il FAUT libérer l'AST */
-	// if (expand_ast(data->ast, data) == 0)
-	exec_ast(data->ast, data);
+	print_ast(data->ast, 0);
+	// exec_ast(data->ast, data);
 	free_ast(data->ast);
 	data->ast = NULL;
 	return (0);

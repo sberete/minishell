@@ -1,44 +1,57 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   echo.c                                             :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/09/14 22:40:14 by sberete           #+#    #+#             */
+/*   Updated: 2025/09/15 01:17:22 by sberete          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "minishell.h"
 
-static int is_n_flag(const char *s)
+static int	is_n_flag(const char *s)
 {
-	size_t i;
+	size_t	i;
 
-	if (!s)
-		return 0;
-	if (s[0] != '-')
-		return 0;
-	if (s[1] == '\0')
-		return 0;
-	i = 1;
-	while (s[i] == 'n')
+	if (!s || s[0] != '-' || s[1] != 'n')
+		return (0);
+	i = 2;
+	while (s[i])
+	{
+		if (s[i] != 'n')
+			return (0);
 		i++;
-	if (s[i] != '\0')
-		return 0;
-	return 1;
+	}
+	return (1);
 }
 
-int ft_echo(char **argv, t_data *data)
+int	builtin_echo(t_data *d, char **av)
 {
-	int i;
-	int newline;
+	int	i;
+	int	no_nl;
+	int	first;
 
-	(void)data;
+	(void)d;
 	i = 1;
-	newline = 1;
-	while (argv[i] && is_n_flag(argv[i]))
+	no_nl = 0;
+	while (av[i] && is_n_flag(av[i]))
 	{
-		newline = 0;
+		no_nl = 1;
 		i++;
 	}
-	while (argv[i])
+	first = 1;
+	while (av[i])
 	{
-		ft_putstr_fd(argv[i], STDOUT_FILENO);
-		if (argv[i + 1])
+		if (!first)
 			ft_putstr_fd(" ", STDOUT_FILENO);
+		ft_putstr_fd(av[i], STDOUT_FILENO);
+		first = 0;
 		i++;
 	}
-	if (newline)
+	if (!no_nl)
 		ft_putstr_fd("\n", STDOUT_FILENO);
-	return 0;
+	return (0);
 }

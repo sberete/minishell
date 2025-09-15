@@ -1,83 +1,87 @@
-#include "minishell.h"
+// #include "minishell.h"
 
-/* NOTE:
- * - L'expand sera ajouté plus tard.
- * - Le strip des quotes se fera ici avant open() quand tu seras prêt.
- * - Pour HEREDOC, run_heredocs_for_redirs préparera r->fd (lecture).
- */
+// /* NOTE:
+//  * - L'expand sera ajouté plus tard.
+//  * - Le strip des quotes se fera ici avant open() quand tu seras prêt.
+//  * - Pour HEREDOC, run_heredocs_for_redirs préparera r->fd (lecture).
+//  */
 
-int apply_redirs(t_redir *redirs)
-{
-	t_redir *r;
-	int      fd;
+// /* ************************************************************************** */
+// /*                                                                            */
+// /*                                                        :::      ::::::::   */
+// /*   exec_redir.c                                       :+:      :+:    :+:   */
+// /*                                                    +:+ +:+         +:+     */
+// /*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+// /*                                                +#+#+#+#+#+   +#+           */
+// /*   Created: 2025/09/15 00:45:00 by sberete           #+#    #+#             */
+// /*   Updated: 2025/09/15 00:45:00 by sberete          ###   ########.fr       */
+// /*                                                                            */
+// /* ************************************************************************** */
 
-	r = redirs;
-	while (r)
-	{
-		if (r->type == REDIR_IN)
-		{
-			fd = open(r->filename, O_RDONLY);
-			if (fd < 0)
-			{
-				dprintf(2, "minishell: %s: %s\n", r->filename, strerror(errno));
-				return 1;
-			}
-			if (dup2(fd, STDIN_FILENO) < 0)
-			{
-				close(fd);
-				return 1;
-			}
-			close(fd);
-		}
-		else if (r->type == REDIR_OUT)
-		{
-			fd = open(r->filename, O_WRONLY | O_CREAT | O_TRUNC, 0644);
-			if (fd < 0)
-			{
-				dprintf(2, "minishell: %s: %s\n", r->filename, strerror(errno));
-				return 1;
-			}
-			if (dup2(fd, STDOUT_FILENO) < 0)
-			{
-				close(fd);
-				return 1;
-			}
-			close(fd);
-		}
-		else if (r->type == REDIR_APPEND)
-		{
-			fd = open(r->filename, O_WRONLY | O_CREAT | O_APPEND, 0644);
-			if (fd < 0)
-			{
-				dprintf(2, "minishell: %s: %s\n", r->filename, strerror(errno));
-				return 1;
-			}
-			if (dup2(fd, STDOUT_FILENO) < 0)
-			{
-				close(fd);
-				return 1;
-			}
-			close(fd);
-		}
-		else if (r->type == REDIR_HEREDOC)
-		{
-			if (r->fd < 0)
-			{
-				dprintf(2, "minishell: heredoc: internal error (no fd)\n");
-				return 1;
-			}
-			if (dup2(r->fd, STDIN_FILENO) < 0)
-			{
-				close(r->fd);
-				r->fd = -1;
-				return 1;
-			}
-			close(r->fd);
-			r->fd = -1;
-		}
-		r = r->next;
-	}
-	return 0;
-}
+// #include "minishell.h"
+// #include <fcntl.h>
+// #include <unistd.h>
 
-  
+// static int	open_infile(const char *path)
+// {
+// 	if (!path)
+// 		return (-1);
+// 	return (open(path, O_RDONLY));
+// }
+
+// static int	open_outfile_trunc(const char *path)
+// {
+// 	if (!path)
+// 		return (-1);
+// 	return (open(path, O_WRONLY | O_CREAT | O_TRUNC, 0644));
+// }
+
+// static int	open_outfile_append(const char *path)
+// {
+// 	if (!path)
+// 		return (-1);
+// 	return (open(path, O_WRONLY | O_CREAT | O_APPEND, 0644));
+// }
+
+// static int	apply_one_redir(t_redir *r)
+// {
+// 	int	fd;
+
+// 	if (r->type == REDIR_IN)
+// 	{
+// 		fd = open_infile(r->filename);
+// 		if (fd < 0 || dup2_and_close(fd, STDIN_FILENO) != 0)
+// 			return (-1);
+// 		return (0);
+// 	}
+// 	if (r->type == REDIR_OUT)
+// 	{
+// 		fd = open_outfile_trunc(r->filename);
+// 		if (fd < 0 || dup2_and_close(fd, STDOUT_FILENO) != 0)
+// 			return (-1);
+// 		return (0);
+// 	}
+// 	if (r->type == REDIR_APPEND)
+// 	{
+// 		fd = open_outfile_append(r->filename);
+// 		if (fd < 0 || dup2_and_close(fd, STDOUT_FILENO) != 0)
+// 			return (-1);
+// 		return (0);
+// 	}
+// 	if (dup2_and_close(r->fd, STDIN_FILENO) != 0)
+// 		return (-1);
+// 	r->fd = -1;
+// 	return (0);
+// }
+
+// int	apply_redirections(t_redir *rlist)
+// {
+// 	while (rlist)
+// 	{
+// 		if (apply_one_redir(rlist) != 0)
+// 			return (-1);
+// 		rlist = rlist->next;
+// 	}
+// 	return (0);
+// }
+

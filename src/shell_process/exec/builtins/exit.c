@@ -3,77 +3,41 @@
 /*                                                        :::      ::::::::   */
 /*   exit.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/10 19:45:00 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/10 19:24:51 by sxrimu           ###   ########.fr       */
+/*   Updated: 2025/09/15 01:17:46 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-static int is_numeric_ll(const char *s, long long *out)
+static int	to_status(const char *s)
 {
-	char       *end;
-	long long   v;
+	long long	nb;
 
-	if (!s || *s == '\0')
-		return 0;
-	errno = 0;
-	v = strtoll(s, &end, 10);
-	if (errno != 0)
-		return 0;
-	if (*end != '\0')
-		return 0;
-	if (out)
-		*out = v;
-	return 1;
+	nb = ft_atoi(s);
+	return ((int)((unsigned char)nb));
 }
 
-static void shell_cleanup_and_exit(t_data *data, int status)
+int	builtin_exit(t_data *d, char **av)
 {
-	rl_clear_history();
-	free_data(data);
-	exit(status);
-}
+	int	status;
 
-/* Comportement proche bash:
-   - exit -> imprime "exit" et quitte avec last_exit
-   - exit N -> si N non numérique => message, exit 255 ; sinon exit(N % 256)
-   - exit N M -> "too many arguments", return 1 (ne quitte pas)
-*/
-int ft_exit(char **argv, t_data *data)
-{
-	long long v;
-	int       code;
-	int       argc;
-
+	(void)d;
 	ft_putstr_fd("exit\n", STDOUT_FILENO);
-
-	argc = 0;
-	while (argv[argc])
-		argc++;
-
-	if (argc == 1)
+	if (!av || !av[1])
+		exit(0);
+	if (!builtin_is_numeric(av[1]))
 	{
-		code = data->last_exit;
-		shell_cleanup_and_exit(data, code);
-		return code; /* unreachable */
+		builtin_err_arg("exit", av[1], "numeric argument required");
+		exit(2);
 	}
-	if (!is_numeric_ll(argv[1], &v))
+	if (av[2])
 	{
-		ft_putstr_fd("minishell: exit: ", STDERR_FILENO);
-		ft_putstr_fd(argv[1], STDERR_FILENO);
-		ft_putstr_fd(": numeric argument required\n", STDERR_FILENO);
-		shell_cleanup_and_exit(data, 255);
-		return 255; /* unreachable */
+		builtin_err("exit", "too many arguments");
+		return (1);
 	}
-	if (argc > 2)
-	{
-		ft_putstr_fd("minishell: exit: too many arguments\n", STDERR_FILENO);
-		return 1;
-	}
-	code = (unsigned char)v;
-	shell_cleanup_and_exit(data, code);
-	return code; /* unreachable */
+	status = to_status(av[1]);
+	exit(status);
 }

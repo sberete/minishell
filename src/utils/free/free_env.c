@@ -6,7 +6,7 @@
 /*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/04 17:05:12 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/04 17:06:05 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/15 01:55:56 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,19 +21,20 @@ static void	env_free_one(t_env *n)
 	free(n);
 }
 
-void	env_clear(t_env **lst)
+void	free_env(t_env **lst)
 {
-	t_env	*n;
-	t_env	*tmp;
+	t_env	*cur;
+	t_env	*nx;
 
 	if (!lst || !*lst)
 		return ;
-	n = *lst;
-	while (n)
+	cur = *lst;
+	while (cur)
 	{
-		tmp = n->next;
-		env_free_one(n);
-		n = tmp;
+		nx = cur->next;
+		env_free_one(cur);
+		cur = nx;
 	}
 	*lst = NULL;
 }
+

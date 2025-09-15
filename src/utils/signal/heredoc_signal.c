@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   heredoc_signal.c                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/07 17:13:56 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/10 19:44:37 by sxrimu           ###   ########.fr       */
+/*   Updated: 2025/09/14 22:26:26 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,7 +53,7 @@ void	signals_setup_heredoc_parent(void)
 
 void	signals_setup_heredoc_child(void)
 {
-	struct sigaction	sa;
+	struct sigaction sa;
 
 	/* défaut : ^C/^\\ tuent le child heredoc (le parent verra 130/131) */
 	sigemptyset(&sa.sa_mask);

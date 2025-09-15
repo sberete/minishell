@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   print_ast.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/08/25 21:50:30 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/09 18:45:37 by sxrimu           ###   ########.fr       */
+/*   Created: 2025/09/14 23:48:50 by sberete           #+#    #+#             */
+/*   Updated: 2025/09/14 23:51:50 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,86 +24,109 @@ static void	print_indent(int depth)
 	}
 }
 
-static void	print_redirs(t_redir *redir, int depth)
+static char	*node_name(t_node_type t)
 {
-	while (redir)
-	{
-		const char *label = "";
-		const char *name = "(null)";
-		const char *suffix = "";
-
-		print_indent(depth);
-		printf("REDIR: ");
-
-		if (redir->type == REDIR_IN)
-			label = "< ";
-		else if (redir->type == REDIR_OUT)
-			label = "> ";
-		else if (redir->type == REDIR_APPEND)
-			label = ">> ";
-		else if (redir->type == REDIR_HEREDOC)
-			label = "<< ";
-
-		if (redir->type == REDIR_HEREDOC)
-		{
-			if (redir->delim)
-				name = redir->delim;
-			if (!redir->delim_can_expand)
-				suffix = " (noexp)";
-		}
-		else
-		{
-			if (redir->filename)
-				name = redir->filename;
-			if (!redir->filename_can_expand)
-				suffix = " (noexp)";
-		}
-		printf("%s%s%s\n", label, name, suffix);
-
-		redir = redir->next;
-	}
+	if (t == NODE_CMD)
+		return ("CMD");
+	if (t == NODE_PIPE)
+		return ("PIPE");
+	if (t == NODE_AND)
+		return ("AND");
+	if (t == NODE_OR)
+		return ("OR");
+	if (t == NODE_SEQ)
+		return ("SEQ");
+	if (t == NODE_GROUP)
+		return ("GROUP");
+	return ("UNKNOWN_NODE");
 }
 
-static void	print_node_type(t_ast *node)
+static char	*redir_name(t_redir_type t)
 {
-	if (node->type == NODE_PIPE)
-		printf("PIPE\n");
-	else if (node->type == NODE_AND)
-		printf("AND (&&)\n");
-	else if (node->type == NODE_OR)
-		printf("OR (||)\n");
-	else if (node->type == NODE_SEQ)
-		printf("SEQ (;)\n");
-	else if (node->type == NODE_GROUP)
-		printf("GROUP (subshell)\n");
+	if (t == REDIR_IN)
+		return ("<");
+	if (t == REDIR_OUT)
+		return (">");
+	if (t == REDIR_APPEND)
+		return (">>");
+	if (t == REDIR_HEREDOC)
+		return ("<<");
+	return ("?");
 }
 
-void	print_ast(t_ast *node, int depth)
+static void	print_cmd_argv(char **argv, int depth)
 {
-	int	i;
+	int		i;
+	char	*val;
 
-	if (!node)
-		return;
 	print_indent(depth);
-	if (node->type == NODE_CMD)
+	printf("CMD:");
+	if (argv)
 	{
-		printf("CMD: ");
 		i = 0;
-		while (node->argv && node->argv[i])
+		while (argv[i])
 		{
-			const char *word = node->argv[i];
-			const char *suffix = "";
-			if (node->argv_can_expand && !node->argv_can_expand[i])
-				suffix = "(noexp)";
-			printf("%s%s ", word, suffix);
+			val = argv[i];
+			if (val == NULL)
+				val = "(null)";
+			printf(" %s", val);
 			i++;
 		}
-		printf("\n");
-		print_redirs(node->redirs, depth + 1);
+		if (i == 0)
+			printf(" (no argv)");
 	}
 	else
-		print_node_type(node);
-	print_ast(node->left, depth + 1);
-	print_ast(node->right, depth + 1);
-	print_ast(node->child, depth + 1);
+		printf(" (no argv)");
+	printf("\n");
+}
+
+static void	print_redirs(t_redir *r, int depth)
+{
+	char	*fname;
+	char	*delim;
+	char	*fexp;
+	char	*dexp;
+
+	while (r)
+	{
+		fname = "(null)";
+		delim = "(null)";
+		fexp = "false";
+		dexp = "false";
+		if (r->filename)
+			fname = r->filename;
+		if (r->delim)
+			delim = r->delim;
+		if (r->filename_can_expand)
+			fexp = "true";
+		if (r->delim_can_expand)
+			dexp = "true";
+		print_indent(depth);
+		printf("  REDIR: %-2s  filename=%s  delim=%s  fexp=%s  dexp=%s\n",
+			redir_name(r->type), fname, delim, fexp, dexp);
+		r = r->next;
+	}
+}
+
+void	print_ast(t_ast *n, int depth)
+{
+	if (!n)
+	{
+		print_indent(depth);
+		printf("(nil)\n");
+		return ;
+	}
+	print_indent(depth);
+	printf("NODE: %s\n", node_name(n->type));
+	if (n->type == NODE_CMD)
+	{
+		print_cmd_argv(n->argv, depth);
+		print_redirs(n->redirs, depth);
+	}
+	if (n->left)
+		print_ast(n->left, depth + 1);
+	if (n->right)
+		print_ast(n->right, depth + 1);
+	if (n->child)
+		print_ast(n->child, depth + 1);
 }

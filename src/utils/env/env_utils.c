@@ -1,12 +1,24 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   env_utils.c                                        :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/09/15 02:01:19 by sberete           #+#    #+#             */
+/*   Updated: 2025/09/15 02:01:20 by sberete          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "minishell.h"
 
-int	id_is_valid(const char *s)
+int	id_is_valid(char *s)
 {
 	size_t	i;
 
 	if (!s || !*s)
 		return (0);
-	if (!(ft_isalpha(*s) || *s == '_'))
+	if (!(ft_isalpha(s[0]) || s[0] == '_'))
 		return (0);
 	i = 1;
 	while (s[i])
@@ -18,147 +30,96 @@ int	id_is_valid(const char *s)
 	return (1);
 }
 
-int	split_key_value(const char *s, char **k, char **v)
+int	parse_assignment(char *s, char **key, char **val, int *append)
 {
-	char	*eq;
+	char	*p;
+	size_t		kl;
 
-	*k = NULL;
-	*v = NULL;
-	if (!s)
+	if (!s || !key || !val || !append)
 		return (-1);
-	eq = ft_strchr(s, '=');
-	if (!eq)
-		return (-1); // pas d' '='
-	*k = ft_substr(s, 0, eq - s);
-	*v = ft_strdup(eq + 1);
-	if (!*k || !*v)
+	*append = 0;
+	p = ft_strchr(s, '=');
+	if (!p)
 	{
-		free(*k);
-		free(*v);
-		*k = NULL;
-		*v = NULL;
-		return (-1);
+		if (!id_is_valid(s))
+			return (-1);
+		*key = ft_strdup(s);
+		if (!*key)
+			return (-1);
+		*val = ft_strdup("");
+		if (!*val)
+			return (free(*key), -1);
+		return (0);
 	}
-	return (0);
-}
-
-int	split_key_append(const char *s, char **k, char **v, int *is_append)
-{
-	char	*plus;
-	char	*eq;
-
-	*k = NULL;
-	*v = NULL;
-	*is_append = 0;
-	if (!s)
-		return (-1);
-	eq = ft_strchr(s, '=');
-	if (!eq)
-		return (-1);
-	// Cherche pattern KEY+=
-	plus = eq - 1;
-	if (plus >= s && *plus == '+')
+	if (p > s && *(p - 1) == '+')
 	{
-		*is_append = 1;
-		*k = ft_substr(s, 0, plus - s);
+		*append = 1;
+		kl = (size_t)(p - s - 1);
 	}
 	else
-		*k = ft_substr(s, 0, eq - s);
-	*v = ft_strdup(eq + 1);
-	if (!*k || !*v)
-	{
-		free(*k);
-		free(*v);
-		*k = NULL;
-		*v = NULL;
-		*is_append = 0;
+		kl = (size_t)(p - s);
+	*key = (char *)malloc(kl + 1);
+	if (!*key)
 		return (-1);
-	}
+	ft_memcpy(*key, s, kl);
+	(*key)[kl] = '\0';
+	if (!id_is_valid(*key))
+		return (free(*key), -1);
+	*val = ft_strdup(p + 1);
+	if (!*val)
+		return (free(*key), -1);
 	return (0);
 }
 
-char	*ms_getenv(t_env *lst, const char *key)
+char	*env_get(t_env *lst, char *key)
 {
-	t_env	*n;
-
-	n = env_find(lst, key);
-	return (n ? n->value : NULL);
+	while (lst)
+	{
+		if (ft_strcmp(lst->key, key) == 0)
+			return (lst->value);
+		lst = lst->next;
+	}
+	return (NULL);
 }
 
-int	ms_setenv(t_env **lst, const char *key, const char *value, int overwrite)
+int	env_set(t_env **lst, char *key, char *value, int overwrite)
 {
-	t_env	*n;
+	t_env	*cur;
 
-	if (!key || !id_is_valid(key))
+	if (!lst || !key || !value)
 		return (-1);
-	n = env_find(*lst, key);
-	if (!n)
+	cur = env_find(*lst, key);
+	if (!cur)
 	{
-		env_add_back(lst, env_new(key, value ? value : ""));
+		cur = env_new(key, value);
+		if (!cur)
+			return (-1);
+		env_add_back(lst, cur);
 		return (0);
 	}
 	if (!overwrite)
 		return (0);
-	free(n->value);
-	n->value = ft_strdup(value ? value : "");
-	if (!n->value)
-	{
-		perror("strdup");
-		exit(1);
-	}
+	free(cur->value);
+	cur->value = ft_strdup(value);
+	if (!cur->value)
+		return (-1);
 	return (0);
 }
 
-int	ms_setenv_eq(t_env **lst, const char *assign)
+int	env_append(t_env **lst, char *key, char *suffix)
 {
-	char	*k;
-	char	*v;
-
-	if (split_key_value(assign, &k, &v) < 0)
-		return (-1);
-	if (!id_is_valid(k))
-	{
-		free(k);
-		free(v);
-		return (-1);
-	}
-	ms_setenv(lst, k, v, 1);
-	free(k);
-	free(v);
-	return (0);
-}
-
-int	ms_setenv_append(t_env **lst, const char *assign)
-{
-	char	*k;
-	char	*v;
-	int		is_append;
-	t_env	*n;
+	t_env	*cur;
 	char	*joined;
 
-	if (split_key_append(assign, &k, &v, &is_append) < 0 || !is_append)
+	if (!lst || !key || !suffix)
 		return (-1);
-	if (!id_is_valid(k))
-	{
-		free(k);
-		free(v);
+	cur = env_find(*lst, key);
+	if (!cur)
+		return (env_set(lst, key, suffix, 1));
+	joined = ft_strjoin(cur->value ? cur->value : "", suffix);
+	if (!joined)
 		return (-1);
-	}
-	n = env_find(*lst, k);
-	if (!n)
-		env_add_back(lst, env_new(k, v));
-	else
-	{
-		joined = ft_strjoin(n->value, v);
-		if (!joined)
-		{
-			perror("strjoin");
-			exit(1);
-		}
-		free(n->value);
-		n->value = joined;
-	}
-	free(k);
-	free(v);
+	free(cur->value);
+	cur->value = joined;
 	return (0);
 }

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ast_utils.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:52:13 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/14 20:00:48 by sxrimu           ###   ########.fr       */
+/*   Updated: 2025/09/14 22:37:55 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,21 +21,20 @@ t_ast	*new_ast_node(t_node_type type)
 	return (node);
 }
 
-/* Ajoute un argument (dup de s) et son flag can_expand à un NODE_CMD */
-bool	add_arg(t_ast *cmd, const char *s, bool can_expand)
+bool	add_arg(t_ast *cmd, char *s, bool can_expand)
 {
-	size_t	len;
 	char	**nargv;
 	bool	*nflags;
+	size_t	len;
 	size_t	i;
 
 	if (!cmd || !s)
 		return (false);
 	len = ft_tablen(cmd->argv);
-	nargv = (char **)malloc(sizeof(char *) * (len + 2));
+	nargv = malloc(sizeof(char *) * (len + 2));
 	if (!nargv)
 		return (false);
-	nflags = (bool *)malloc(sizeof(bool) * (len + 1));
+	nflags = malloc(sizeof(bool) * (len + 1));
 	if (!nflags)
 	{
 		free(nargv);
@@ -57,7 +56,6 @@ bool	add_arg(t_ast *cmd, const char *s, bool can_expand)
 	}
 	nflags[len] = can_expand;
 	nargv[len + 1] = NULL;
-
 	free(cmd->argv);
 	free(cmd->argv_can_expand);
 	cmd->argv = nargv;
@@ -65,10 +63,8 @@ bool	add_arg(t_ast *cmd, const char *s, bool can_expand)
 	return (true);
 }
 
-/* ------------------------- Redirections ---------------------------------- */
-
 t_redir	*new_redir(t_redir_type type, char *filename, char *delim,
-					bool filename_can_expand, bool delim_can_expand)
+		bool filename_can_expand, bool delim_can_expand)
 {
 	t_redir	*r;
 
@@ -80,8 +76,8 @@ t_redir	*new_redir(t_redir_type type, char *filename, char *delim,
 		return (NULL);
 	}
 	r->type = type;
-	r->filename = filename;  /* ownership pris */
-	r->delim = delim;        /* ownership pris */
+	r->filename = filename;
+	r->delim = delim;
 	r->fd = -1;
 	r->filename_can_expand = filename_can_expand;
 	r->delim_can_expand = delim_can_expand;

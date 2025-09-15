@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   free_token.c                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:47:15 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/14 18:04:26 by sxrimu           ###   ########.fr       */
+/*   Updated: 2025/09/14 22:22:30 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,6 @@ void	free_token_node(t_token *n)
 	free(n->value);
 	free(n);
 }
-
 
 void	free_token_list(t_token **head)
 {

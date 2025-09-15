@@ -3,36 +3,31 @@
 /*                                                        :::      ::::::::   */
 /*   env.c                                              :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/10 19:45:00 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/10 19:24:14 by sxrimu           ###   ########.fr       */
+/*   Updated: 2025/09/15 01:17:37 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
-#include <unistd.h>
 
-int ft_env(char **argv, t_data *data)
+int	builtin_env(t_data *data, char **argv)
 {
-	t_env *it;
+	t_env	*cur;
 
-	if (argv[1])
+	(void)argv;
+	cur = data->env;
+	while (cur)
 	{
-		ft_putstr_fd("minishell: env: too many arguments\n", STDERR_FILENO);
-		return 1;
-	}
-	it = data->env;
-	while (it)
-	{
-		if (it->value)
+		if (cur->value && cur->value[0] != '\0')
 		{
-			ft_putstr_fd(it->key, STDOUT_FILENO);
+			ft_putstr_fd(cur->key, STDOUT_FILENO);
 			ft_putstr_fd("=", STDOUT_FILENO);
-			ft_putstr_fd(it->value, STDOUT_FILENO);
+			ft_putstr_fd(cur->value, STDOUT_FILENO);
 			ft_putstr_fd("\n", STDOUT_FILENO);
 		}
-		it = it->next;
+		cur = cur->next;
 	}
-	return 0;
+	return (0);
 }

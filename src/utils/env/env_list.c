@@ -1,32 +1,32 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   env_list.c                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/09/15 02:01:15 by sberete           #+#    #+#             */
+/*   Updated: 2025/09/15 02:11:26 by sberete          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "minishell.h"
 
-static void	*xdup(const char *s)
-{
-	char	*p;
-
-	if (!s)
-		return (NULL);
-	p = ft_strdup(s);
-	if (!p)
-	{
-		perror("strdup");
-		exit(1);
-	}
-	return (p);
-}
-
-t_env	*env_new(const char *key, const char *value)
+t_env	*env_new(char *key, char *value)
 {
 	t_env	*n;
 
 	n = (t_env *)malloc(sizeof(t_env));
 	if (!n)
-	{
-		perror("malloc");
-		exit(1);
-	}
-	n->key = xdup(key);
-	n->value = value ? xdup(value) : xdup("");
+		return (NULL);
+	n->key = ft_strdup(key ? key : "");
+	if (!n->key)
+		return (free(n), NULL);
+	if (!value)
+		value = "";
+	n->value = ft_strdup(value);
+	if (!n->value)
+		return (free(n->key), free(n), NULL);
 	n->next = NULL;
 	return (n);
 }
@@ -48,35 +48,7 @@ void	env_add_back(t_env **lst, t_env *node)
 	cur->next = node;
 }
 
-size_t	env_size(t_env *lst)
-{
-	size_t	n;
-
-	n = 0;
-	while (lst)
-	{
-		++n;
-		lst = lst->next;
-	}
-	return (n);
-}
-
-static t_env	*env_find_prev(t_env *lst, const char *key)
-{
-	t_env	*prev;
-
-	prev = NULL;
-	while (lst)
-	{
-		if (ft_strcmp(lst->key, key) == 0)
-			return (prev); // prev == NULL si premier élément
-		prev = lst;
-		lst = lst->next;
-	}
-	return (NULL); // non trouvé
-}
-
-t_env	*env_find(t_env *lst, const char *key)
+t_env	*env_find(t_env *lst, char *key)
 {
 	while (lst)
 	{
@@ -87,29 +59,30 @@ t_env	*env_find(t_env *lst, const char *key)
 	return (NULL);
 }
 
-int	env_remove(t_env **lst, const char *key)
+int	env_remove(t_env **lst, char *key)
 {
-	t_env *prev;
-	t_env *cur;
+	t_env	*cur;
+	t_env	*prev;
 
 	if (!lst || !*lst || !key)
 		return (-1);
-	if (ft_strcmp((*lst)->key, key) == 0)
+	prev = NULL;
+	cur = *lst;
+	while (cur)
 	{
-		cur = *lst;
-		*lst = cur->next;
-		free(cur->key);
-		free(cur->value);
-		free(cur);
-		return (0);
+		if (ft_strcmp(cur->key, key) == 0)
+		{
+			if (prev)
+				prev->next = cur->next;
+			else
+				*lst = cur->next;
+			free(cur->key);
+			free(cur->value);
+			free(cur);
+			return (0);
+		}
+		prev = cur;
+		cur = cur->next;
 	}
-	prev = env_find_prev(*lst, key);
-	if (!prev || !prev->next)
-		return (-1);
-	cur = prev->next;
-	prev->next = cur->next;
-	free(cur->key);
-	free(cur->value);
-	free(cur);
-	return (0);
+	return (-1);
 }

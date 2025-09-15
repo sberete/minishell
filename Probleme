@@ -1,3 +1,0 @@
-export a = b && echo $a
-
-expand dans l'exec

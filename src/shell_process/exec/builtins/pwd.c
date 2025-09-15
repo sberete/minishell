@@ -1,25 +1,28 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   pwd.c                                              :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/09/14 22:42:06 by sberete           #+#    #+#             */
+/*   Updated: 2025/09/15 01:25:25 by sberete          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "minishell.h"
-#include <unistd.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <string.h>
 
-int ft_pwd(char **argv, t_data *data)
+int	builtin_pwd(t_data *d, char **av)
 {
-	char *cwd;
+	char	*cwd;
 
-	(void)argv;
-	(void)data;
+	(void)d;
+	(void)av;
 	cwd = getcwd(NULL, 0);
 	if (!cwd)
-	{
-		ft_putstr_fd("minishell: pwd: ", STDERR_FILENO);
-		ft_putstr_fd((char *)strerror(errno), STDERR_FILENO);
-		ft_putstr_fd("\n", STDERR_FILENO);
-		return 1;
-	}
+		return (1);
 	ft_putstr_fd(cwd, STDOUT_FILENO);
 	ft_putstr_fd("\n", STDOUT_FILENO);
 	free(cwd);
-	return 0;
+	return (0);
 }

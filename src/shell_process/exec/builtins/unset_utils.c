@@ -1,38 +1,45 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   readline.c                                         :+:      :+:    :+:   */
+/*   unset_utils.c                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/09/14 22:28:37 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/14 22:52:19 by sberete          ###   ########.fr       */
+/*   Created: 2025/09/15 01:35:00 by sberete           #+#    #+#             */
+/*   Updated: 2025/09/15 01:32:43 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-int	read_input(t_data *data)
+int	unset_is_valid_name(char *s)
 {
-	char	*line;
-	int		i;
+	size_t	i;
 
-	line = readline("minishell > ");
-	data->line = line;
-	if (line == NULL)
-	{
-		printf("exit\n");
-		rl_clear_history();
+	if (!s || !*s)
 		return (0);
-	}
-	i = 0;
-	skip_spaces(data, &i);
-	if (line[i] == '\0')
+	if (s[0] == '=' || !(ft_isalpha(s[0]) || s[0] == '_'))
+		return (0);
+	i = 1;
+	while (s[i])
 	{
-		free(line);
-		data->line = NULL;
-		return (2);
+		if (s[i] == '=')
+			return (0);
+		if (!(ft_isalnum(s[i]) || s[i] == '_'))
+			return (0);
+		i++;
 	}
-	add_history(line);
+	return (1);
+}
+
+int	unset_remove_key(t_env **env, char *name)
+{
+	int	rc;
+
+	if (!env || !name)
+		return (1);
+	rc = env_remove(env, name);
+	if (rc == 0 || rc == -1)
+		return (0);
 	return (1);
 }

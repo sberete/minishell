@@ -1,70 +1,87 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   cd.c                                               :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/09/14 22:40:19 by sberete           #+#    #+#             */
+/*   Updated: 2025/09/15 01:32:10 by sberete          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "minishell.h"
 #include <unistd.h>
-#include <errno.h>
-#include <string.h>
-#include <stdlib.h>
 
-static int set_pwd_vars(t_data *data, const char *oldpwd)
+static int	set_env_key(t_data *d, char *k, char *v)
 {
-	char *cwd;
-
-	cwd = getcwd(NULL, 0);
-	if (!cwd)
-	{
-		/* Si getcwd échoue, on essaie quand même de mettre OLDPWD */
-		if (oldpwd)
-			ms_setenv(&data->env, "OLDPWD", oldpwd, 1);
-		return 0;
-	}
-	if (oldpwd)
-		ms_setenv(&data->env, "OLDPWD", oldpwd, 1);
-	ms_setenv(&data->env, "PWD", cwd, 1);
-	free(cwd);
-	return 0;
+	if (env_set(&d->env, k, v ? v : "", 1) != 0)
+		return (1);
+	return (0);
 }
 
-int ft_cd(char **argv, t_data *data)
+static int	update_pwds(t_data *d, char *oldpwd)
 {
-	const char *target;
-	const char *home;
-	char       *oldpwd;
-	int         ac;
+	char	*newpwd;
+	int		rc;
 
-	ac = 0;
-	while (argv[ac])
-		ac++;
-	if (ac > 2)
-	{
-		ft_putstr_fd("minishell: cd: too many arguments\n", STDERR_FILENO);
-		return 1;
-	}
-	if (ac == 1)
-	{
-		home = ms_getenv(data->env, "HOME");
-		if (!home || home[0] == '\0')
-		{
-			ft_putstr_fd("minishell: cd: HOME not set\n", STDERR_FILENO);
-			return 1;
-		}
-		target = home;
-	}
-	else
-		target = argv[1];
+	newpwd = getcwd(NULL, 0);
+	if (!newpwd)
+		return (1);
+	rc = set_env_key(d, "OLDPWD", oldpwd);
+	if (rc == 0)
+		rc = set_env_key(d, "PWD", newpwd);
+	free(newpwd);
+	return (rc);
+}
+
+static int	cd_to_path(t_data *d, char *path)
+{
+	char	*oldpwd;
 
 	oldpwd = getcwd(NULL, 0);
-	if (chdir(target) != 0)
+	if (!path || chdir(path) != 0)
 	{
-		ft_putstr_fd("minishell: cd: ", STDERR_FILENO);
-		ft_putstr_fd((char *)target, STDERR_FILENO);
-		ft_putstr_fd(": ", STDERR_FILENO);
-		ft_putstr_fd((char *)strerror(errno), STDERR_FILENO);
-		ft_putstr_fd("\n", STDERR_FILENO);
 		if (oldpwd)
 			free(oldpwd);
-		return 1;
+		builtin_err_arg("cd", path, "No such file or directory");
+		return (1);
 	}
-	set_pwd_vars(data, oldpwd);
+	if (update_pwds(d, oldpwd) != 0)
+	{
+		if (oldpwd)
+			free(oldpwd);
+		return (1);
+	}
 	if (oldpwd)
 		free(oldpwd);
-	return 0;
+	return (0);
+}
+
+static int	cd_dash(t_data *d)
+{
+	char	*old;
+
+	old = env_get(d->env, "OLDPWD");
+	if (!old || *old == '\0')
+		return (builtin_err("cd", "OLDPWD not set"), 1);
+	ft_putstr_fd(old, STDOUT_FILENO);
+	ft_putstr_fd("\n", STDOUT_FILENO);
+	return (cd_to_path(d, old));
+}
+
+int	builtin_cd(t_data *d, char **av)
+{
+	char	*home;
+
+	if (!av || !av[1] || av[1][0] == '\0')
+	{
+		home = env_get(d->env, "HOME");
+		if (!home || *home == '\0')
+			return (builtin_err("cd", "HOME not set"), 1);
+		return (cd_to_path(d, home));
+	}
+	if (ft_strcmp(av[1], "-") == 0)
+		return (cd_dash(d));
+	return (cd_to_path(d, av[1]));
 }

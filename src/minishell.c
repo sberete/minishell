@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   minishell.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/05 19:53:11 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/16 13:55:11 by sxrimu           ###   ########.fr       */
+/*   Updated: 2025/09/16 23:06:58 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,12 +30,7 @@ int	main(int argc, char **argv, char **env)
 			free_data(&data);
 			break ;
 		}
-		if (rc == 2)
-		{
-			free_data_tmp(&data);
-			continue ;
-		}
-		if (shell_process(&data) == 1)
+		if (shell_process(&data) == 1 || rc == 2)
 		{
 			free_data_tmp(&data);
 			continue ;

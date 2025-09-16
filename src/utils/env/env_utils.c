@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   env_list.c                                         :+:      :+:    :+:   */
+/*   env_utils.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/15 02:01:15 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/15 22:23:32 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/16 22:10:01 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,17 +16,27 @@ t_env	*env_new(char *key, char *value)
 {
 	t_env	*n;
 
-	n = (t_env *)malloc(sizeof(t_env));
+	n = malloc(sizeof(t_env));
 	if (!n)
 		return (NULL);
-	n->key = ft_strdup(key ? key : "");
+	if (key == NULL)
+		n->key = ft_strdup("");
+	else
+		n->key = ft_strdup(key);
 	if (!n->key)
-		return (free(n), NULL);
-	if (!value)
+	{
+		free(n);
+		return (NULL);
+	}
+	if (value == NULL)
 		value = "";
 	n->value = ft_strdup(value);
 	if (!n->value)
-		return (free(n->key), free(n), NULL);
+	{
+		free(n->key);
+		free(n);
+		return (NULL);
+	}
 	n->next = NULL;
 	return (n);
 }
@@ -46,4 +56,17 @@ void	env_add_back(t_env **lst, t_env *node)
 	while (cur->next)
 		cur = cur->next;
 	cur->next = node;
+}
+
+size_t	env_list_size(t_env *lst)
+{
+	size_t	n;
+
+	n = 0;
+	while (lst)
+	{
+		n++;
+		lst = lst->next;
+	}
+	return (n);
 }

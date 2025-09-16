@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   minishell.h                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:46:06 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/16 20:09:44 by sxrimu           ###   ########.fr       */
+/*   Updated: 2025/09/17 01:24:20 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -275,9 +275,11 @@ int     apply_redirs(t_redir *rlist);  /* tu l’as déjà, garde ce nom */
 
 /* redirect stdio (before exec), simple helper */
 int     redirect_io(int in_fd, int out_fd);
+int	wait_status_to_code(int s);
 
 /* recherche du binaire dans PATH (liste chaînée env) */
-char    *find_cmd_path(const char *name, t_env *env);
+char	*find_cmd_path(char *name, t_env *env);
+
 
 /* ========= EXPANSION (argv + redirs) ========= */
 int     expand_redirs_inplace(t_redir *rlist, t_data *data);
@@ -309,6 +311,9 @@ int	wait_and_get_status(pid_t pid);
 int run_builtin_argv(t_data *data, char **av);
 int shell_process(t_data *data);
 t_ast  *parse_entry(t_data *data);
-
+void	set_exit_status(int code);
+void	print_indent(int depth);
+void	print_redirs(t_redir *r, int depth);
+size_t	env_list_size(t_env *lst);
 
 #endif /* MINISHELL_H */

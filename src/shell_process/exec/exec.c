@@ -1,215 +1,202 @@
 #include "minishell.h"
-#include <errno.h>
-
-/* helpers locaux */
-static int	exec_cmd_node(t_ast *cmd, t_data *data, int in_fd, int out_fd, int in_pipe);
-static int	exec_pipeline_node(t_ast *n, t_data *data);
-static int	exec_andor_node(t_ast *n, t_data *data);
-static int	exec_seq_node(t_ast *n, t_data *data);
-static int	exec_group_node(t_ast *n, t_data *data);
 
 /* 1/5 : exécute une commande simple (builtin parent si pas de pipe) */
-static int	exec_cmd_node(t_ast *cmd, t_data *data, int in_fd, int out_fd, int in_pipe)
+static int is_parent_builtin(char *name)
 {
-	char	**argv;
-	int		sin;
-	int		sout;
-	pid_t	pid;
-
-	if (!cmd)
-		return (1);
-	if (expand_redirs_inplace(cmd->redirs, data) != 0)
-		return (1);
-	argv = expand_argv_full(cmd, data);
-	if (!argv)
-		return (1);
-	if (!argv[0] && !cmd->redirs)
-	{
-		free_tab(argv);
-		return (0);
-	}
-	if (!in_pipe && argv[0] && is_builtin(argv[0]))
-	{
-		if (save_stdio(&sin, &sout) != 0)
-			return (free_tab(argv), 1);
-		if (redirect_io(in_fd, out_fd) != 0 || apply_redirs(cmd->redirs) != 0)
-		{
-			restore_stdio(sin, sout);
-			return (free_tab(argv), 1);
-		}
-		data->last_exit = exec_builtin(data, cmd);
-		restore_stdio(sin, sout);
-		free_tab(argv);
-		return (data->last_exit);
-	}
-	pid = fork();
-	if (pid < 0)
-		return (free_tab(argv), 1);
-	if (pid == 0)
-	{
-		signals_setup_child();
-		if (redirect_io(in_fd, out_fd) != 0 || apply_redirs(cmd->redirs) != 0)
-			_exit(1);
-		if (argv[0] && is_builtin(argv[0]))
-			_exit(exec_builtin(data, cmd));
-		if (!argv[0])
-			_exit(0);
-		/* externe */
-		{
-			char	*path;
-			char	**envp;
-
-			path = find_cmd_path(argv[0], data->env);
-			if (!path)
-				_exit(127);
-			envp = env_list_to_envp(data->env);
-			if (!envp)
-				_exit(1);
-			execve(path, argv, envp);
-			free(path);
-			free_tab(envp);
-			_exit(127);
-		}
-	}
-	signals_setup_parent_execwait();
-	free_tab(argv);
-	return (wait_and_get_status(pid));
+	return name
+		&& (str_eq(name, "cd")
+		 || str_eq(name, "export")
+		 || str_eq(name, "unset")
+		 || str_eq(name, "exit"));
 }
 
-/* 2/5 : exécute un pipeline binaire (gauche | droite), itératif */
-static int	exec_pipeline_node(t_ast *n, t_data *data)
+static int wait_status_to_code(int s)
 {
-	t_ast	*nodes[256];
-	int		count;
-	int		i;
-	int		prev_in;
-	int		pfd[2];
-	pid_t	last_pid;
-	pid_t	pid;
+	if (WIFEXITED(s))
+		return WEXITSTATUS(s);
+	if (WIFSIGNALED(s))
+		return 128 + WTERMSIG(s);
+	return 1;
+}
 
-	count = 0;
-	while (n && n->type == NODE_PIPE && count < 255)
+static void exec_cmd_in_child(t_ast *cmd, t_data *data)
+{
+	char **argv = expand_argv_dup(cmd, data);
+	if (!argv || !argv[0])
+		_exit(0);
+
+	/* redirections */
+	if (expand_redirs_inplace(cmd->redirs, data) != 0)
+		_exit(1);
+	if (apply_redirs(cmd->redirs) != 0)
+		_exit(1);
+
+	/* builtin dans l’enfant */
+	if (is_builtin(argv[0])) {
+		int st = run_builtin_argv(data, argv);
+		_exit(st);
+	}
+
+	/* externe */
 	{
-		nodes[count] = n->left;
-		count++;
+		char  *path = find_cmd_path(argv[0], data->env);
+		char **envp = env_list_to_envp(data->env);
+		if (!path)
+			_exit(127);
+		execve(path, argv, envp);
+		_exit(errno == ENOENT ? 127 : 126);
+	}
+}
+
+
+int exec_cmd_node(t_ast *n, t_data *data)
+{
+	if (!n || n->type != NODE_CMD)
+		return 1;
+
+	/* Builtins parent (sans redirections) */
+	if (n->argv && n->argv[0] && is_parent_builtin(n->argv[0]) && n->redirs == NULL)
+	{
+		char **av = expand_argv_dup(n, data);
+		int    rc = av ? run_builtin_argv(data, av) : 1;
+		data->last_exit = rc;
+		return rc;
+	}
+
+	/* Sinon: fork et exécuter dans l’enfant (pas de re-fork) */
+	pid_t pid = fork();
+	if (pid < 0)
+		return 1;
+
+	if (pid == 0) {
+		signals_setup_child();
+		exec_cmd_in_child(n, data); /* ne revient pas */
+		_exit(127);
+	}
+	signals_setup_parent_execwait();
+
+	int s, rc;
+	if (waitpid(pid, &s, 0) < 0) rc = 1;
+	else rc = wait_status_to_code(s);
+
+	data->last_exit = rc;
+	return rc;
+}
+
+
+
+/* Convertit un status wait(2) en code shell 0..255 */
+int run_subshell(t_ast *sub, t_data *data)
+{
+	pid_t pid;
+	int   st;
+
+	pid = fork();
+	if (pid < 0)
+		return 1;
+	if (pid == 0) {
+		signals_setup_child();
+		st = exec_ast(sub, data);
+		_exit(st);
+	}
+	signals_setup_parent_execwait();
+	return wait_and_get_status(pid);
+}
+/* Exécute une commande *dans l’enfant* (pipeline/subshell) sans refork. */
+
+
+/* 2/5 : exécute un pipeline binaire (gauche | droite), itératif */
+static int exec_pipeline_node(t_ast *n, t_data *data)
+{
+	t_ast *nodes[256];
+	int    count = 0;
+
+	while (n && n->type == NODE_PIPE && count < 255) {
+		nodes[count++] = n->left;
 		n = n->right;
 	}
-	nodes[count] = n;
-	count++;
-	prev_in = -1;
-	last_pid = -1;
-	i = 0;
-	while (i < count)
-	{
-		if (i < count - 1)
-		{
-			if (pipe(pfd) != 0)
-			{
-				if (prev_in >= 0)
-					close(prev_in);
-				return (1);
-			}
+	nodes[count++] = n;
+
+	int   prev_in = -1, pfd[2];
+	pid_t last_pid = -1;
+
+	for (int i = 0; i < count; ++i) {
+		if (i < count - 1 && pipe(pfd) != 0) {
+			if (prev_in != -1) close(prev_in);
+			return 1;
 		}
-		pid = fork();
-		if (pid < 0)
-		{
-			if (prev_in >= 0)
-				close(prev_in);
-			if (i < count - 1)
-			{
-				close(pfd[0]);
-				close(pfd[1]);
-			}
-			return (1);
+		pid_t pid = fork();
+		if (pid < 0) {
+			if (prev_in != -1) close(prev_in);
+			if (i < count - 1) { close(pfd[0]); close(pfd[1]); }
+			return 1;
 		}
-		if (pid == 0)
-		{
+		if (pid == 0) {
 			signals_setup_child();
-			if (i < count - 1 && dup2(pfd[1], STDOUT_FILENO) < 0)
-				_exit(1);
-			if (i < count - 1)
-				close(pfd[0]);
-			if (i < count - 1)
-				close(pfd[1]);
-			if (prev_in >= 0 && dup2(prev_in, STDIN_FILENO) < 0)
-				_exit(1);
-			if (prev_in >= 0)
+			if (prev_in != -1) {
+				if (dup2(prev_in, STDIN_FILENO) < 0) _exit(1);
 				close(prev_in);
+			}
+			if (i < count - 1) {
+				close(pfd[0]);
+				if (dup2(pfd[1], STDOUT_FILENO) < 0) _exit(1);
+				close(pfd[1]);
+			}
 			if (nodes[i]->type == NODE_CMD)
-				_exit(exec_cmd_node(nodes[i], data, -1, -1, 1));
+				exec_cmd_in_child(nodes[i], data);
 			else if (nodes[i]->type == NODE_GROUP)
 				_exit(run_subshell(nodes[i]->child, data));
 			else
 				_exit(exec_ast(nodes[i], data));
 		}
-		if (prev_in >= 0)
-			close(prev_in);
-		if (i < count - 1)
-		{
+		if (prev_in != -1) close(prev_in);
+		if (i < count - 1) {
 			close(pfd[1]);
 			prev_in = pfd[0];
 		}
 		last_pid = pid;
-		i++;
 	}
-	{
-		int		status;
-		pid_t	w;
 
-		status = 0;
-		while (1)
-		{
-			w = waitpid(-1, NULL, 0);
-			if (w < 0)
-				break ;
-			if (w == last_pid)
-				status = wait_and_get_status(w);
-		}
-		return (status);
+	int s, rc = 0; pid_t w;
+	while ((w = waitpid(-1, &s, 0)) > 0) {
+		if (w == last_pid)
+			rc = wait_status_to_code(s);
 	}
+	data->last_exit = rc;
+	return rc;
 }
 
-/* 3/5 : exécute AND/OR */
-static int	exec_andor_node(t_ast *n, t_data *data)
-{
-	int	ls;
 
-	if (!n || !n->left || !n->right)
-		return (1);
-	ls = exec_ast(n->left, data);
-	if (n->type == NODE_AND)
-	{
-		if (ls == 0)
-			return (exec_ast(n->right, data));
-		return (ls);
+
+/* 3/5 : exécute AND/OR */
+static int exec_and_or_node(t_ast *n, t_data *d)
+{
+	int st = exec_ast(n->left, d);
+	if (n->type == NODE_AND) {
+		if (st == 0) st = exec_ast(n->right, d);
+	} else {
+		if (st != 0) st = exec_ast(n->right, d);
 	}
-	if (n->type == NODE_OR)
-	{
-		if (ls != 0)
-			return (exec_ast(n->right, data));
-		return (ls);
-	}
-	return (1);
+	d->last_exit = st;
+	return st;
 }
 
 /* 4/5 : séquence ';' */
-static int	exec_seq_node(t_ast *n, t_data *data)
+static int exec_seq_node(t_ast *n, t_data *data)
 {
-	int	st;
-
-	if (!n)
-		return (1);
-	st = exec_ast(n->left, data);
-	(void)st;
-	return (exec_ast(n->right, data));
+	if (!n) return 1;
+	(void)exec_ast(n->left, data);
+	return exec_ast(n->right, data);
 }
 
+
 /* 5/5 : groupe '( ... )' dans un sous-shell */
-static int	exec_group_node(t_ast *n, t_data *data)
+static int exec_group_node(t_ast *n, t_data *data)
 {
-	if (!n)
-		return (1);
-	return (run_subshell(n->child, data));
+	if (!n) return 1;
+	int st = run_subshell(n->child, data);
+	data->last_exit = st;
+	return st;
 }
 
 /* PUBLIC: wrapper top-level (prépare heredocs une seule fois) */
@@ -227,11 +214,11 @@ int	exec_ast(t_ast *node, t_data *data)
 	}
 	depth++;
 	if (node->type == NODE_CMD)
-		st = exec_cmd_node(node, data, -1, -1, 0);
+		st = exec_cmd_node(node, data);   /* <-- plus d’anciens 5 arguments */
 	else if (node->type == NODE_PIPE)
 		st = exec_pipeline_node(node, data);
 	else if (node->type == NODE_AND || node->type == NODE_OR)
-		st = exec_andor_node(node, data);
+		st = exec_and_or_node(node, data);
 	else if (node->type == NODE_SEQ)
 		st = exec_seq_node(node, data);
 	else if (node->type == NODE_GROUP)

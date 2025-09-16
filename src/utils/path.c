@@ -19,7 +19,6 @@ char	*find_cmd_path(const char *name, t_env *env)
 	ret = NULL;
 	if (!name || !*name)
 		return (NULL);
-	/* chemin avec '/' -> tester directement */
 	if (strchr(name, '/'))
 		return (is_executable(name) ? ft_strdup(name) : NULL);
 	paths = env_get(env, "PATH");

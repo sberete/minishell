@@ -3,31 +3,76 @@
 /*                                                        :::      ::::::::   */
 /*   expand_wildcard.c                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:51:16 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/15 22:24:25 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/16 12:48:23 by sxrimu           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-/* renvoie un tableau trié des matches du motif dans le répertoire courant */
-static char	**glob_collect_matches(const char *pat, size_t *out_n)
-{
-	DIR				*d;
-	struct dirent	*e;
-	char			**arr;
-	size_t			cap;
-	size_t			n;
-	char			*dup;
-	char			**tmp;
+#include "minishell.h"
+#include <dirent.h>
 
-	*out_n = 0;
+/* match '*' (zéro ou plus de caractères), pas de '?' ni [] */
+static int match_star(const char *name, const char *pat)
+{
+	while (*pat)
+	{
+		if (*pat == '*')
+		{
+			/* consommer les '*' consécutifs */
+			while (*pat == '*')
+				pat++;
+			if (*pat == '\0')
+				return (1);
+			while (*name)
+			{
+				if (match_star(name, pat))
+					return (1);
+				name++;
+			}
+			return (0);
+		}
+		if (*name != *pat)
+			return (0);
+		name++;
+		pat++;
+	}
+	return (*name == '\0');
+}
+
+static int pattern_has_star(const char *s)
+{
+	size_t i;
+
+	if (!s)
+		return (0);
+	i = 0;
+	while (s[i])
+	{
+		if (s[i] == '*')
+			return (1);
+		i++;
+	}
+	return (0);
+}
+
+/* retourne un tableau trié de matches, ou NULL si malloc fail
+   si aucun match: renvoie tableau à 0 élément (NULL immédiatement) */
+static char **glob_list_matches(const char *pat)
+{
+	DIR *d;
+	struct dirent *ent;
+	char **arr;
+	size_t cap, n;
+	int want_hidden;
+
 	d = opendir(".");
 	if (!d)
 		return (NULL);
-	cap = 8;
+	cap = 16;
 	n = 0;
 	arr = (char **)malloc(sizeof(char *) * cap);
 	if (!arr)
@@ -35,111 +80,177 @@ static char	**glob_collect_matches(const char *pat, size_t *out_n)
 		closedir(d);
 		return (NULL);
 	}
-	e = readdir(d);
-	while (e)
+	want_hidden = (pat[0] == '.');
+	while ((ent = readdir(d)) != NULL)
 	{
-		if (glob_match_name(e->d_name, pat))
+		const char *name = ent->d_name;
+		if (!want_hidden && name[0] == '.')
+			continue ;
+		if (match_star(name, pat))
 		{
-			if (n == cap)
+			char *dup = ft_strdup(name);
+			if (!dup)
+				goto oom;
+			if (n + 1 >= cap)
 			{
-				tmp = (char **)malloc(sizeof(char *) * (cap * 2));
+				size_t newcap = cap * 2;
+				char **tmp = (char **)malloc(sizeof(char *) * newcap);
+				size_t i = 0;
 				if (!tmp)
-					break ;
-				ft_memcpy(tmp, arr, sizeof(char *) * n);
+				{
+					free(dup);
+					goto oom;
+				}
+				while (i < n)
+				{
+					tmp[i] = arr[i];
+					i++;
+				}
 				free(arr);
 				arr = tmp;
-				cap = cap * 2;
+				cap = newcap;
 			}
-			dup = ft_strdup(e->d_name);
-			if (!dup)
-				break ;
-			arr[n] = dup;
-			n++;
+			arr[n++] = dup;
 		}
-		e = readdir(d);
 	}
 	closedir(d);
-	*out_n = n;
-	if (n == 0)
+	/* tri insertion simple */
 	{
-		free(arr);
-		return (NULL);
+		size_t i = 1;
+		while (i < n)
+		{
+			char *key = arr[i];
+			size_t j = i;
+			while (j > 0 && ft_strcmp(arr[j - 1], key) > 0)
+			{
+				arr[j] = arr[j - 1];
+				j--;
+			}
+			arr[j] = key;
+			i++;
+		}
 	}
-	str_array_insertion_sort(arr, n);
+	arr[n] = NULL;
 	return (arr);
+oom:
+	closedir(d);
+	/* free partiel */
+	{
+		size_t i = 0;
+		while (i < n)
+		{
+			free(arr[i]);
+			i++;
+		}
+		free(arr);
+	}
+	return (NULL);
 }
 
-/* expand glob sur argv: remplace chaque motif par ses matches (ou le garde) */
-char	**expand_argv_glob(char **argv)
+/* applique le glob sur chaque argv: si pas d’étoile ou aucun match -> on garde tel quel */
+char **expand_argv_glob(char **argv)
 {
-	size_t	i;
-	size_t	n_in;
-	size_t	n_out;
-	char	**out;
-	size_t	cap;
-	char	**matches;
-	size_t	mc;
-	char	**tmp;
-	size_t	k;
-	char	**tmp2;
+	size_t i, n_out, cap;
+	char **out;
 
-	if (!argv)
-		return (NULL);
-	n_in = 0;
-	while (argv[n_in])
-		n_in++;
-	cap = n_in + 8;
+	/* compter */
+	i = 0;
+	cap = 16;
+	n_out = 0;
 	out = (char **)malloc(sizeof(char *) * cap);
 	if (!out)
 		return (NULL);
-	n_out = 0;
-	i = 0;
-	while (i < n_in)
+	while (argv && argv[i])
 	{
-		matches = NULL;
-		mc = 0;
 		if (pattern_has_star(argv[i]))
-			matches = glob_collect_matches(argv[i], &mc);
-		if (!matches)
 		{
-			if (n_out + 1 >= cap)
+			char **matches = glob_list_matches(argv[i]);
+			if (!matches)
 			{
-				tmp = (char **)malloc(sizeof(char *) * (cap * 2));
-				if (!tmp)
-					return (/* leak minimal */ out);
-				ft_memcpy(tmp, out, sizeof(char *) * n_out);
-				free(out);
-				out = tmp;
-				cap = cap * 2;
+				free_tab(out);
+				return (NULL);
 			}
-			out[n_out] = ft_strdup(argv[i]);
-			if (!out[n_out])
-				return (out);
-			n_out++;
+			if (matches[0] != NULL)
+			{
+				size_t k = 0;
+				while (matches[k])
+				{
+					if (n_out + 2 > cap)
+					{
+						size_t newcap = cap * 2;
+						char **tmp = (char **)malloc(sizeof(char *) * newcap);
+						size_t t = 0;
+						if (!tmp)
+						{
+							free_tab(matches);
+							free_tab(out);
+							return (NULL);
+						}
+						while (t < n_out)
+						{
+							tmp[t] = out[t];
+							t++;
+						}
+						free(out);
+						out = tmp;
+						cap = newcap;
+					}
+					out[n_out++] = ft_strdup(matches[k]);
+					k++;
+				}
+				free_tab(matches);
+			}
+			else
+			{
+				/* aucun match -> conserver le littéral */
+				if (n_out + 2 > cap)
+				{
+					size_t newcap = cap * 2;
+					char **tmp = (char **)malloc(sizeof(char *) * newcap);
+					size_t t = 0;
+					if (!tmp)
+					{
+						free_tab(out);
+						return (NULL);
+					}
+					while (t < n_out)
+					{
+						tmp[t] = out[t];
+						t++;
+					}
+					free(out);
+					out = tmp;
+					cap = newcap;
+				}
+				out[n_out++] = ft_strdup(argv[i]);
+			}
 		}
 		else
 		{
-			k = 0;
-			while (k < mc)
+			if (n_out + 2 > cap)
 			{
-				if (n_out + 1 >= cap)
+				size_t newcap = cap * 2;
+				char **tmp = (char **)malloc(sizeof(char *) * newcap);
+				size_t t = 0;
+				if (!tmp)
 				{
-					tmp2 = (char **)malloc(sizeof(char *) * (cap * 2));
-					if (!tmp2)
-						return (out);
-					ft_memcpy(tmp2, out, sizeof(char *) * n_out);
-					free(out);
-					out = tmp2;
-					cap = cap * 2;
+					free_tab(out);
+					return (NULL);
 				}
-				out[n_out] = matches[k];
-				n_out++;
-				k++;
+				while (t < n_out)
+				{
+					tmp[t] = out[t];
+					t++;
+				}
+				free(out);
+				out = tmp;
+				cap = newcap;
 			}
-			free(matches);
+			out[n_out++] = ft_strdup(argv[i]);
 		}
 		i++;
 	}
 	out[n_out] = NULL;
 	return (out);
 }
+

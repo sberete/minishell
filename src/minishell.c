@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   minishell.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/05 19:53:11 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/14 22:59:29 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/16 13:55:11 by sxrimu           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,7 @@ int	main(int argc, char **argv, char **env)
 	while (1)
 	{
 		rc = read_input(&data);
-		// sync_exit_status(&data);
+		sync_exit_status(&data);
 		if (rc == 0)
 		{
 			free_data(&data);

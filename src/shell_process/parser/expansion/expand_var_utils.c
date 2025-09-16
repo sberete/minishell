@@ -1,7 +1,7 @@
 #include "minishell.h"
 
-/* début de nom de var: [A-Za-z_] ou '?' (géré à part côté appelant) */
-int	var_name_start(char c)
+/* début de nom de var: [A-Za-z_] */
+int var_name_start(char c)
 {
 	if (ft_isalpha((unsigned char)c))
 		return (1);
@@ -11,7 +11,7 @@ int	var_name_start(char c)
 }
 
 /* suite de nom: [A-Za-z0-9_] */
-int	var_name_char(char c)
+int var_name_char(char c)
 {
 	if (ft_isalnum((unsigned char)c))
 		return (1);
@@ -20,34 +20,45 @@ int	var_name_char(char c)
 	return (0);
 }
 
-/* calcule la longueur du nom à partir de s[pos] (après $) */
-size_t	var_name_len(const char *s, size_t pos)
+/* extrait le nom de variable à partir de s[i] (i pointe APRES le '$')
+   - '?' -> name="?" et renvoie l’index suivant
+   - identifiant classique -> name="FOO" et renvoie l’index après le nom
+   - sinon -> name="" et renvoie i (rien à consommer) */
+size_t var_name_extract(const char *s, size_t i, char **name_out)
 {
-	size_t	i;
+	size_t j;
 
-	i = 0;
-	if (!s)
-		return (0);
-	if (!var_name_start(s[pos]))
-		return (0);
-	while (s[pos + i] && var_name_char(s[pos + i]))
-		i++;
-	return (i);
+	if (!s || !name_out)
+		return (i);
+	*name_out = NULL;
+	if (s[i] == '?')
+	{
+		*name_out = ft_strdup("?");
+		return (i + 1);
+	}
+	if (!var_name_start(s[i]))
+	{
+		*name_out = ft_strdup("");
+		return (i);
+	}
+	j = i + 1;
+	while (s[j] && var_name_char(s[j]))
+		j++;
+	*name_out = ft_substr(s, i, j - i);
+	return (j);
 }
 
-/* valeur d'une variable: $? -> last_exit, sinon env ; dup retournée */
-char	*var_value_dup(const char *name, t_data *data)
+/* valeur expandée pour un nom:
+   - "?" -> itoa(last_exit)
+   - sinon -> valeur d'env ("" si absente) */
+char *var_expand_value(const char *name, t_data *data)
 {
-	char	*val;
-	char	*dup;
+	const char *val;
 
 	if (!name || !data)
 		return (NULL);
 	if (name[0] == '?' && name[1] == '\0')
-	{
-		dup = ft_itoa(data->last_exit);
-		return (dup);
-	}
+		return (ft_itoa(data->last_exit));
 	val = env_get(data->env, (char *)name);
 	if (!val)
 		return (ft_strdup(""));

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   lexer_utils.c                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:52:29 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/14 23:03:01 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/16 19:36:00 by sxrimu           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -93,8 +93,6 @@ t_token_type	get_token_type(const char *str)
 		return (T_PAREN_OPEN);
 	else if (!ft_strcmp(str, ")"))
 		return (T_PAREN_CLOSE);
-	else if (!ft_strcmp(str, "*"))
-		return (T_WILDCARD);
 	else if (*str == '\0')
 		return (T_END);
 	return (T_WORD);

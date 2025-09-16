@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   minishell.h                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:46:06 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/16 01:46:38 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/16 20:09:44 by sxrimu           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -253,7 +253,6 @@ char							**expand_argv_vars(char **argv,
 									bool *can_expand, t_data *data);
 
 /* expansion — glob */
-int								pattern_has_star(const char *s);
 int								glob_match_name(const char *name,
 									const char *pat);
 void							str_array_insertion_sort(char **arr, size_t n);
@@ -270,7 +269,6 @@ int	save_stdio(int *saved_in, int *saved_out);
 void	restore_stdio(int saved_in, int saved_out);
 int	wait_and_get_status(pid_t pid);
 int	run_subshell(t_ast *sub, t_data *data);
-void	update_exit_from_wait(int st);
 /* ========= EXEC / REDIRS / PATH ========= */
 /* redirections complètes (appliquées dans le child) */
 int     apply_redirs(t_redir *rlist);  /* tu l’as déjà, garde ce nom */
@@ -289,7 +287,6 @@ char    **expand_argv_full(t_ast *cmd, t_data *data);
 
 /* ========= UTILS tableaus ========= */
 char	**expand_argv_glob(char **argv);
-int	pattern_has_star(const char *s);
 int	glob_match_name(const char *name, const char *pat);
 void	str_array_insertion_sort(char **arr, size_t n);
 char	*ms_expand_vars(const char *s, t_data *data);
@@ -303,5 +300,15 @@ void	quote_step(char c, int *in_s, int *in_d);
 char	*str_append_free(char *dst, const char *src);
 char	*substr_dup(const char *s, size_t pos, size_t len);
 int expand_redirs_inplace(t_redir *r, t_data *data);
+char **expand_argv_full(t_ast *cmd, t_data *data);
+char **expand_argv_dup(t_ast *cmd, t_data *data); /* si utilisé ailleurs */
+int var_name_start(char c);
+size_t var_name_extract(const char *s, size_t i, char **name_out);
+char *var_expand_value(const char *name, t_data *data);
+int	wait_and_get_status(pid_t pid);
+int run_builtin_argv(t_data *data, char **av);
+int shell_process(t_data *data);
+t_ast  *parse_entry(t_data *data);
+
 
 #endif /* MINISHELL_H */

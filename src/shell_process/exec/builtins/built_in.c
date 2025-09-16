@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   built_in.c                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/14 22:39:43 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/15 01:30:36 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/16 15:54:06 by sxrimu           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,6 +29,20 @@ int	is_builtin(char *name)
 	if (str_eq(name, "exit"))
 		return (1);
 	return (0);
+}
+/* Dispatch builtin sur un tableau argv (utilisable dans l’enfant du pipe) */
+int run_builtin_argv(t_data *data, char **av)
+{
+    if (!av || !av[0])
+        return 0;
+    if (str_eq(av[0], "echo"))   return builtin_echo(data, av);
+    if (str_eq(av[0], "cd"))     return builtin_cd(data, av);
+    if (str_eq(av[0], "pwd"))    return builtin_pwd(data, av);
+    if (str_eq(av[0], "export")) return builtin_export(data, av);
+    if (str_eq(av[0], "unset"))  return builtin_unset(data, av);
+    if (str_eq(av[0], "env"))    return builtin_env(data, av);
+    if (str_eq(av[0], "exit"))   return builtin_exit(data, av);
+    return 1;
 }
 
 int	exec_builtin(t_data *data, t_ast *cmd)

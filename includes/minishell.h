@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   minishell.h                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:46:06 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/17 01:24:20 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/17 17:02:07 by sxrimu           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -101,14 +101,17 @@ typedef struct s_ast
 
 typedef struct s_exec
 {
-	int prev_read;   // fd de lecture du pipe précédent (-1 si aucun)
-	int pipe_fd[2];  // fd pour le pipe courant [0] = read, [1] = write
-	char *path;      // chemin absolu de la commande
-	char **argv;     // arguments (venant de l’AST)
-	t_redir *redirs; // redirections à appliquer
-	pid_t *pids;     // pid du processus (utile pour wait)
-	struct s_data				*data;
-}								t_exec;
+	int         prev_read;     /* read du pipe précédent, -1 si aucun */
+	int         pipe_fd[2];    /* pipe courant [0]=read, [1]=write (ou -1) */
+	int         fd_heredoc[2]; /* pipe pour heredoc courant (optionnel), -1 si off */
+	char       *path;          /* chemin de la commande externe */
+	char      **argv;          /* argv (copie/expand) pour exec/builtins parent */
+	char      **envp;          /* tableau "KEY=VAL" pour execve (optionnel) */
+	int         envp_built;    /* 1 si envp a été construit, sinon 0 */
+	t_redir    *redirs;        /* redirections de la commande (AST) */
+	struct s_data *data;       /* back-pointer */
+}	t_exec;
+
 
 typedef struct s_env
 {
@@ -268,7 +271,6 @@ char	*heredoc_expand_line(char *line, t_data *data);
 int	save_stdio(int *saved_in, int *saved_out);
 void	restore_stdio(int saved_in, int saved_out);
 int	wait_and_get_status(pid_t pid);
-int	run_subshell(t_ast *sub, t_data *data);
 /* ========= EXEC / REDIRS / PATH ========= */
 /* redirections complètes (appliquées dans le child) */
 int     apply_redirs(t_redir *rlist);  /* tu l’as déjà, garde ce nom */
@@ -315,5 +317,27 @@ void	set_exit_status(int code);
 void	print_indent(int depth);
 void	print_redirs(t_redir *r, int depth);
 size_t	env_list_size(t_env *lst);
+int	exec_group_node(t_ast *n, t_data *data);
+int	exec_pipeline_node(t_ast *n, t_data *data);
+int	exec_cmd_node(t_ast *n, t_data *data);
+int	exec_and_or_node(t_ast *n, t_data *d);
+int	exec_seq_node(t_ast *n, t_data *data);
+void	child_exec_cmd(t_ast *cmd, t_exec *x);
+int	run_subshell(t_ast *sub, t_data *data);
+void	exec_ctx_init_cmd(t_exec *x, struct s_data *d, t_ast *cmd);
+void	exec_ctx_close_pipes(t_exec *x);
+void	exec_ctx_free_argv(t_exec *x);
+void	exec_ctx_free_envp(t_exec *x);
+void	exec_ctx_free_path(t_exec *x);
+/* === wildcard utils === */
+int     match_star(const char *name, const char *pat);
+int     pattern_has_star(const char *s);
+int     arr_grow(char ***arr, size_t *cap);
+int     arr_push_dup(char ***arr, size_t *cap, size_t *n, const char *s);
+void    arr_free_all(char **arr, size_t n);
+void    sort_strings(char **arr, size_t n);
+
+/* === wildcard expand main === */
+char    **expand_argv_glob(char **argv);
 
 #endif /* MINISHELL_H */

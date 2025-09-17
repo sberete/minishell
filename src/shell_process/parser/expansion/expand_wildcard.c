@@ -1,256 +1,173 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   expand_wildcard.c                                  :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/08/25 21:51:16 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/16 12:48:23 by sxrimu           ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
-#include "minishell.h"
-
 #include "minishell.h"
 #include <dirent.h>
 
-/* match '*' (zéro ou plus de caractères), pas de '?' ni [] */
-static int match_star(const char *name, const char *pat)
+/* ----- split dir/base pour le motif dir + * ----- */
+
+static char	*dup_dirpath(const char *pat, const char **base)
 {
-	while (*pat)
-	{
-		if (*pat == '*')
-		{
-			/* consommer les '*' consécutifs */
-			while (*pat == '*')
-				pat++;
-			if (*pat == '\0')
-				return (1);
-			while (*name)
-			{
-				if (match_star(name, pat))
-					return (1);
-				name++;
-			}
-			return (0);
-		}
-		if (*name != *pat)
-			return (0);
-		name++;
-		pat++;
-	}
-	return (*name == '\0');
+	const char	*slash;
+
+	*base = pat;
+	if (!pat)
+		return (ft_strdup("."));
+	slash = ft_strrchr(pat, '/');
+	if (!slash)
+		return (ft_strdup("."));
+	*base = slash + 1;
+	if (slash == pat)
+		return (ft_strdup("/"));
+	return (ft_substr(pat, 0, (size_t)(slash - pat)));
 }
 
-static int pattern_has_star(const char *s)
+static int	want_hidden_first(const char *basepat)
 {
-	size_t i;
+	return (basepat && basepat[0] == '.');
+}
 
-	if (!s)
-		return (0);
-	i = 0;
-	while (s[i])
+/* utilise ft_join_sep(a, "/", b) */
+static char	*join_dir_name(const char *dir, const char *name)
+{
+	if (!dir || dir[0] == '\0')
+		return (ft_join_sep(".", "/", name));
+	if (dir[0] == '/' && dir[1] == '\0')
+		return (ft_join_sep("/", "", name));
+	return (ft_join_sep(dir, "/", name));
+}
+
+/* ----- collecte des matches dans un répertoire ----- */
+
+static char	**empty_vec(void)
+{
+	char	**v;
+
+	v = (char **)malloc(sizeof(char *));
+	if (!v)
+		return (NULL);
+	v[0] = NULL;
+	return (v);
+}
+
+static int	push_match(char ***arr, size_t *cap, size_t *n, char *joined)
+{
+	int	rc;
+
+	rc = arr_push_dup(arr, cap, n, joined);
+	free(joined);
+	return (rc);
+}
+
+static char	**collect_matches(const char *dir, const char *basepat)
+{
+	DIR				*d;
+	struct dirent	*ent;
+	char			**arr;
+	size_t			cap;
+	size_t			n;
+	int				want_hidden;
+
+	d = opendir(dir ? dir : ".");
+	if (!d)
+		return (empty_vec());
+	arr = NULL;
+	cap = 0;
+	n = 0;
+	want_hidden = want_hidden_first(basepat);
+	while ((ent = readdir(d)) != NULL)
 	{
-		if (s[i] == '*')
-			return (1);
-		i++;
+		if (!want_hidden && ent->d_name[0] == '.')
+			continue ;
+		if (!match_star(ent->d_name, basepat))
+			continue ;
+		if (!arr && arr_grow(&arr, &cap) != 0)
+		{
+			closedir(d);
+			return (NULL);
+		}
+		if (push_match(&arr, &cap, &n, join_dir_name(dir, ent->d_name)) != 0)
+		{
+			closedir(d);
+			arr_free_all(arr, n);
+			return (NULL);
+		}
 	}
+	closedir(d);
+	if (!arr)
+		return (empty_vec());
+	sort_strings(arr, n);
+	return (arr);
+}
+
+/* ----- applique le glob sur un argument ----- */
+
+static int	append_matches_or_literal(char ***out, size_t *cap, size_t *n,
+		const char *arg)
+{
+	char		*dir;
+	const char	*base;
+	char		**matches;
+	size_t		k;
+
+	dir = dup_dirpath(arg, &base);
+	if (!dir)
+		return (1);
+	matches = collect_matches(dir, base);
+	free(dir);
+	if (!matches)
+		return (1);
+	if (!matches[0])
+	{
+		free(matches);
+		return (arr_push_dup(out, cap, n, arg));
+	}
+	k = 0;
+	while (matches[k])
+	{
+		if (arr_push_dup(out, cap, n, matches[k]) != 0)
+		{
+			free_tab(matches);
+			return (1);
+		}
+		k++;
+	}
+	free_tab(matches);
 	return (0);
 }
 
-/* retourne un tableau trié de matches, ou NULL si malloc fail
-   si aucun match: renvoie tableau à 0 élément (NULL immédiatement) */
-static char **glob_list_matches(const char *pat)
+/* ----- public: expand argv avec '*' (sans '?', '[]') ----- */
+
+char	**expand_argv_glob(char **argv)
 {
-	DIR *d;
-	struct dirent *ent;
-	char **arr;
-	size_t cap, n;
-	int want_hidden;
+	size_t	i;
+	size_t	n;
+	size_t	cap;
+	char	**out;
 
-	d = opendir(".");
-	if (!d)
-		return (NULL);
-	cap = 16;
-	n = 0;
-	arr = (char **)malloc(sizeof(char *) * cap);
-	if (!arr)
-	{
-		closedir(d);
-		return (NULL);
-	}
-	want_hidden = (pat[0] == '.');
-	while ((ent = readdir(d)) != NULL)
-	{
-		const char *name = ent->d_name;
-		if (!want_hidden && name[0] == '.')
-			continue ;
-		if (match_star(name, pat))
-		{
-			char *dup = ft_strdup(name);
-			if (!dup)
-				goto oom;
-			if (n + 1 >= cap)
-			{
-				size_t newcap = cap * 2;
-				char **tmp = (char **)malloc(sizeof(char *) * newcap);
-				size_t i = 0;
-				if (!tmp)
-				{
-					free(dup);
-					goto oom;
-				}
-				while (i < n)
-				{
-					tmp[i] = arr[i];
-					i++;
-				}
-				free(arr);
-				arr = tmp;
-				cap = newcap;
-			}
-			arr[n++] = dup;
-		}
-	}
-	closedir(d);
-	/* tri insertion simple */
-	{
-		size_t i = 1;
-		while (i < n)
-		{
-			char *key = arr[i];
-			size_t j = i;
-			while (j > 0 && ft_strcmp(arr[j - 1], key) > 0)
-			{
-				arr[j] = arr[j - 1];
-				j--;
-			}
-			arr[j] = key;
-			i++;
-		}
-	}
-	arr[n] = NULL;
-	return (arr);
-oom:
-	closedir(d);
-	/* free partiel */
-	{
-		size_t i = 0;
-		while (i < n)
-		{
-			free(arr[i]);
-			i++;
-		}
-		free(arr);
-	}
-	return (NULL);
-}
-
-/* applique le glob sur chaque argv: si pas d’étoile ou aucun match -> on garde tel quel */
-char **expand_argv_glob(char **argv)
-{
-	size_t i, n_out, cap;
-	char **out;
-
-	/* compter */
 	i = 0;
-	cap = 16;
-	n_out = 0;
-	out = (char **)malloc(sizeof(char *) * cap);
-	if (!out)
+	n = 0;
+	cap = 0;
+	out = NULL;
+	if (arr_grow(&out, &cap) != 0)
 		return (NULL);
 	while (argv && argv[i])
 	{
 		if (pattern_has_star(argv[i]))
 		{
-			char **matches = glob_list_matches(argv[i]);
-			if (!matches)
+			if (append_matches_or_literal(&out, &cap, &n, argv[i]) != 0)
 			{
-				free_tab(out);
+				arr_free_all(out, n);
 				return (NULL);
-			}
-			if (matches[0] != NULL)
-			{
-				size_t k = 0;
-				while (matches[k])
-				{
-					if (n_out + 2 > cap)
-					{
-						size_t newcap = cap * 2;
-						char **tmp = (char **)malloc(sizeof(char *) * newcap);
-						size_t t = 0;
-						if (!tmp)
-						{
-							free_tab(matches);
-							free_tab(out);
-							return (NULL);
-						}
-						while (t < n_out)
-						{
-							tmp[t] = out[t];
-							t++;
-						}
-						free(out);
-						out = tmp;
-						cap = newcap;
-					}
-					out[n_out++] = ft_strdup(matches[k]);
-					k++;
-				}
-				free_tab(matches);
-			}
-			else
-			{
-				/* aucun match -> conserver le littéral */
-				if (n_out + 2 > cap)
-				{
-					size_t newcap = cap * 2;
-					char **tmp = (char **)malloc(sizeof(char *) * newcap);
-					size_t t = 0;
-					if (!tmp)
-					{
-						free_tab(out);
-						return (NULL);
-					}
-					while (t < n_out)
-					{
-						tmp[t] = out[t];
-						t++;
-					}
-					free(out);
-					out = tmp;
-					cap = newcap;
-				}
-				out[n_out++] = ft_strdup(argv[i]);
 			}
 		}
 		else
 		{
-			if (n_out + 2 > cap)
+			if (arr_push_dup(&out, &cap, &n, argv[i]) != 0)
 			{
-				size_t newcap = cap * 2;
-				char **tmp = (char **)malloc(sizeof(char *) * newcap);
-				size_t t = 0;
-				if (!tmp)
-				{
-					free_tab(out);
-					return (NULL);
-				}
-				while (t < n_out)
-				{
-					tmp[t] = out[t];
-					t++;
-				}
-				free(out);
-				out = tmp;
-				cap = newcap;
+				arr_free_all(out, n);
+				return (NULL);
 			}
-			out[n_out++] = ft_strdup(argv[i]);
 		}
 		i++;
 	}
-	out[n_out] = NULL;
+	out[n] = NULL;
 	return (out);
 }
-

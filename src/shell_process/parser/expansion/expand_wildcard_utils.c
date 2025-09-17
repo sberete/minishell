@@ -1,7 +1,29 @@
 #include "minishell.h"
-#include <dirent.h>
 
-/* teste s contient au moins un '*' non vide */
+/* '*' only, no '?', '[]' ; récursif mais court */
+int	match_star(const char *name, const char *pat)
+{
+	if (!*pat)
+		return (*name == '\0');
+	if (*pat == '*')
+	{
+		while (*pat == '*')
+			pat++;
+		if (!*pat)
+			return (1);
+		while (*name)
+		{
+			if (match_star(name, pat))
+				return (1);
+			name++;
+		}
+		return (0);
+	}
+	if (*name != *pat)
+		return (0);
+	return (match_star(name + 1, pat + 1));
+}
+
 int	pattern_has_star(const char *s)
 {
 	size_t	i;
@@ -18,43 +40,70 @@ int	pattern_has_star(const char *s)
 	return (0);
 }
 
-/* match simple '*' (pas de classes), récursif */
-static int	match_star_rec(const char *name, const char *pat)
+/* --- tableau dynamique de strings (NULL-terminé à la fin) --- */
+
+int	arr_grow(char ***arr, size_t *cap)
 {
-	if (*pat == '\0')
-		return (*name == '\0');
-	if (*pat == '*')
+	char	**tmp;
+	size_t	i;
+	size_t	newcap;
+
+	newcap = (*cap == 0) ? 8 : (*cap * 2);
+	tmp = (char **)malloc(sizeof(char *) * newcap);
+	if (!tmp)
+		return (1);
+	i = 0;
+	while (i < *cap && *arr && (*arr)[i])
 	{
-		while (*pat == '*')
-			pat++;
-		if (*pat == '\0')
-			return (1);
-		while (*name)
-		{
-			if (match_star_rec(name, pat))
-				return (1);
-			name++;
-		}
-		return (0);
+		tmp[i] = (*arr)[i];
+		i++;
 	}
-	if (*name != '\0' && *pat == *name)
-		return (match_star_rec(name + 1, pat + 1));
+	while (i < newcap)
+	{
+		tmp[i] = NULL;
+		i++;
+	}
+	free(*arr);
+	*arr = tmp;
+	*cap = newcap;
 	return (0);
 }
 
-/* règle des dotfiles: si motif ne commence pas par '.',
-	on ne matche pas les noms '.' */
-int	glob_match_name(const char *name, const char *pat)
+int	arr_push_dup(char ***arr, size_t *cap, size_t *n, const char *s)
 {
-	if (!name || !pat)
-		return (0);
-	if (name[0] == '.' && pat[0] != '.')
-		return (0);
-	return (match_star_rec(name, pat));
+	char	*dup;
+
+	if (*n + 2 > *cap)
+	{
+		if (arr_grow(arr, cap) != 0)
+			return (1);
+	}
+	dup = ft_strdup(s ? s : "");
+	if (!dup)
+		return (1);
+	(*arr)[*n] = dup;
+	*n += 1;
+	(*arr)[*n] = NULL;
+	return (0);
 }
 
-/* tri insertion d'un tableau de strings */
-void	str_array_insertion_sort(char **arr, size_t n)
+void	arr_free_all(char **arr, size_t n)
+{
+	size_t	i;
+
+	if (!arr)
+		return ;
+	i = 0;
+	while (i < n && arr[i])
+	{
+		free(arr[i]);
+		i++;
+	}
+	free(arr);
+}
+
+/* insertion sort (petit n) */
+void	sort_strings(char **arr, size_t n)
 {
 	size_t	i;
 	size_t	j;

@@ -6,7 +6,7 @@
 /*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:53:06 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/14 17:58:32 by sxrimu           ###   ########.fr       */
+/*   Updated: 2025/09/17 17:34:48 by sxrimu           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,7 +49,10 @@ char	*extract_word(t_data *data, int *i)
 		(*i)++;
 	}
 	if (in_s || in_d)
+	{
+		printf("Unclosed quote \n");
 		return (NULL);
+	}
 	return (ft_substr(data->line, start, *i - start));
 }
 

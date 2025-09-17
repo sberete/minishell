@@ -3,18 +3,26 @@
 /*                                                        :::      ::::::::   */
 /*   path.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/16 23:01:40 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/16 23:01:45 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/17 15:55:23 by sxrimu           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-static int	is_executable(char *p)
+int	is_executable(const char *path)
 {
-	return (access(p, X_OK) == 0);
+	struct stat st;
+
+	if (!path)
+		return (0);
+	if (stat(path, &st) != 0)
+		return (0);
+	if (!S_ISREG(st.st_mode))
+		return (0);
+	return (access(path, X_OK) == 0);
 }
 
 static char	**env_path_split(t_env *env)

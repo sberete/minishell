@@ -1,6 +1,6 @@
 #include "minishell.h"
 
-static int append_slice(char **dst, const char *src, size_t off, size_t len)
+static int append_slice(char **dst, char *src, size_t off, size_t len)
 {
 	char *part, *join;
 
@@ -23,7 +23,7 @@ static int append_slice(char **dst, const char *src, size_t off, size_t len)
 	return (0);
 }
 
-static int append_cstr(char **dst, const char *s)
+static int append_cstr(char **dst, char *s)
 {
 	char *join;
 
@@ -42,7 +42,7 @@ static int append_cstr(char **dst, const char *s)
 	return (0);
 }
 
-char *ms_expand_vars(const char *s, t_data *data)
+char *ms_expand_vars(char *s, t_data *data)
 {
 	size_t i, lit_start;
 	int    in_s, in_d;

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   lexer_extract.c                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:53:06 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/17 17:34:48 by sxrimu           ###   ########.fr       */
+/*   Updated: 2025/09/18 04:43:09 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,6 +25,21 @@ char	*extract_operator(t_data *data, int *i)
 		return (NULL);
 	*i += len;
 	return (op);
+}
+
+static void	print_unclosed_quote_error(int in_s, int in_d)
+{
+	char	q;
+
+	q = '?';
+	if (in_s)
+		q = '\'';
+	else if (in_d)
+		q = '\"';
+	ft_putstr_fd("minishell: syntax error: unexpected EOF ", 2);
+	ft_putstr_fd("while looking for matching `", 2);
+	ft_putchar_fd(q, 2);
+	ft_putstr_fd("'\n", 2);
 }
 
 char	*extract_word(t_data *data, int *i)
@@ -50,7 +65,7 @@ char	*extract_word(t_data *data, int *i)
 	}
 	if (in_s || in_d)
 	{
-		printf("Unclosed quote \n");
+		print_unclosed_quote_error(in_s, in_d);
 		return (NULL);
 	}
 	return (ft_substr(data->line, start, *i - start));

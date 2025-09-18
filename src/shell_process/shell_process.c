@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   shell_process.c                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/07 17:56:28 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/17 16:02:47 by sxrimu           ###   ########.fr       */
+/*   Updated: 2025/09/18 02:38:27 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,25 +24,21 @@ int	shell_process(t_data *data)
 		set_exit_status(2);
 		return (1);
 	}
-	/* ⬇️ LIGNE CLÉ : si aucune commande après lexing -> noop, pas d’erreur */
-	if (data->tokens == NULL)
-		return (2);
-
+	// print_tokens(data->tokens);
 	head = data->tokens;
 	data->ast = parse_entry(data);
 	free_token_list(&head);
 	data->tokens = NULL;
-
 	if (!data->ast)
 	{
 		print_syntax_error("parser");
+		free_ast(data->ast);
 		set_exit_status(2);
 		return (1);
 	}
+	print_ast(data->ast, 0);
 	exec_ast(data->ast, data);
 	free_ast(data->ast);
 	data->ast = NULL;
 	return (0);
 }
-
-

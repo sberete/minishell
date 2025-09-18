@@ -24,7 +24,7 @@ int var_name_char(char c)
    - '?' -> name="?" et renvoie l’index suivant
    - identifiant classique -> name="FOO" et renvoie l’index après le nom
    - sinon -> name="" et renvoie i (rien à consommer) */
-size_t var_name_extract(const char *s, size_t i, char **name_out)
+size_t var_name_extract(char *s, size_t i, char **name_out)
 {
 	size_t j;
 
@@ -51,9 +51,9 @@ size_t var_name_extract(const char *s, size_t i, char **name_out)
 /* valeur expandée pour un nom:
    - "?" -> itoa(last_exit)
    - sinon -> valeur d'env ("" si absente) */
-char *var_expand_value(const char *name, t_data *data)
+char *var_expand_value(char *name, t_data *data)
 {
-	const char *val;
+	char *val;
 
 	if (!name || !data)
 		return (NULL);

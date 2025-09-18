@@ -6,7 +6,7 @@
 /*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/14 22:40:19 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/15 22:20:06 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/18 04:46:13 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,14 @@
 
 static int	set_env_key(t_data *d, char *k, char *v)
 {
-	if (env_set(&d->env, k, v ? v : "", 1) != 0)
+	char	*val;
+
+	if (!d || !k)
+		return (1);
+	val = v;
+	if (val == NULL)
+		val = "";
+	if (env_set(&d->env, k, val, 1) != 0)
 		return (1);
 	return (0);
 }

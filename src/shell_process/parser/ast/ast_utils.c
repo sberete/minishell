@@ -6,7 +6,7 @@
 /*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:52:13 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/15 22:22:01 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/18 05:34:39 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,90 +21,86 @@ t_ast	*new_ast_node(t_node_type type)
 	return (node);
 }
 
+/* alloc des deux tableaux (argv len+2, flags len+1) */
+static int	alloc_both(size_t len, char ***argvp, bool **flagsp)
+{
+	*argvp = (char **)malloc(sizeof(char *) * (len + 2));
+	if (!*argvp)
+		return (1);
+	*flagsp = (bool *)malloc(sizeof(bool) * (len + 1));
+	if (!*flagsp)
+	{
+		free(*argvp);
+		*argvp = NULL;
+		return (1);
+	}
+	return (0);
+}
+
+/* recopie les pointeurs existants + flags (ou false si tableau absent) */
+static void	copy_old(const t_ast *cmd, char **na, bool *nf, size_t len)
+{
+	size_t	i;
+
+	i = 0;
+	while (i < len)
+	{
+		na[i] = cmd->argv[i];
+		if (cmd->argv_can_expand)
+			nf[i] = cmd->argv_can_expand[i];
+		else
+			nf[i] = false;
+		i++;
+	}
+	na[len] = NULL;
+}
+
+/* ajoute le nouvel élément et termine argv; pose aussi le flag */
+static int	append_last(char ***pna, bool **pnf, const char *s, bool can_exp)
+{
+	char	**na;
+	bool	*nf;
+	size_t	i;
+	char	*dup;
+
+	if (!s)
+		return (1);
+	dup = ft_strdup(s);
+	if (!dup)
+		return (1);
+	na = *pna;
+	nf = *pnf;
+	i = 0;
+	while (na[i] != NULL)
+		i++;
+	na[i] = dup;
+	na[i + 1] = NULL;
+	nf[i] = can_exp;
+	return (0);
+}
+
+/* API */
 bool	add_arg(t_ast *cmd, char *s, bool can_expand)
 {
-	char	**nargv;
-	bool	*nflags;
+	char	**na;
+	bool	*nf;
 	size_t	len;
-	size_t	i;
 
 	if (!cmd || !s)
 		return (false);
 	len = ft_tablen(cmd->argv);
-	nargv = malloc(sizeof(char *) * (len + 2));
-	if (!nargv)
+	if (alloc_both(len, &na, &nf) != 0)
 		return (false);
-	nflags = malloc(sizeof(bool) * (len + 1));
-	if (!nflags)
+	copy_old(cmd, na, nf, len);
+	if (append_last(&na, &nf, s, can_expand) != 0)
 	{
-		free(nargv);
-		return (false);
-	}
-	i = 0;
-	while (i < len)
-	{
-		nargv[i] = cmd->argv[i];
-		nflags[i] = cmd->argv_can_expand[i];
-		i++;
-	}
-	nargv[len] = ft_strdup(s);
-	if (!nargv[len])
-	{
-		free(nflags);
-		free(nargv);
+		free(nf);
+		free(na);
 		return (false);
 	}
-	nflags[len] = can_expand;
-	nargv[len + 1] = NULL;
 	free(cmd->argv);
 	free(cmd->argv_can_expand);
-	cmd->argv = nargv;
-	cmd->argv_can_expand = nflags;
+	cmd->argv = na;
+	cmd->argv_can_expand = nf;
 	return (true);
-}
-
-#include "minishell.h"
-
-t_redir	*new_redir(t_redir_type type, char *text, bool can_exp)
-{
-	t_redir	*r;
-
-	r = (t_redir *)malloc(sizeof(t_redir));
-	if (!r)
-		return (NULL);
-	r->type = type;
-	r->fd = -1;
-	r->next = NULL;
-	r->filename = NULL;
-	r->delim = NULL;
-	r->filename_can_expand = false;
-	r->delim_can_expand = false;
-	if (type == REDIR_HEREDOC)
-	{
-		r->delim = text;
-		r->delim_can_expand = can_exp;
-	}
-	else
-	{
-		r->filename = text;
-		r->filename_can_expand = can_exp;
-	}
-	return (r);
-}
-
-void	add_redir(t_ast *cmd_node, t_redir *redir)
-{
-	t_redir	*cur;
-
-	if (!cmd_node || !redir)
-		return ;
-	if (!cmd_node->redirs)
-	{
-		cmd_node->redirs = redir;
-		return ;
-	}
-	cur = cmd_node->redirs;
-	while (cur->next)
-		cur = cur->next;
-	cur->next = redir;
 }

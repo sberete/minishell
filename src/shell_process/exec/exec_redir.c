@@ -1,11 +1,19 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   exec_redir.c                                       :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/09/18 01:49:37 by sberete           #+#    #+#             */
+/*   Updated: 2025/09/18 01:49:53 by sberete          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "minishell.h"
-#include <fcntl.h>
-#include <errno.h>
-#include <stdio.h>
-#include <unistd.h>
 
 /* 1/5 */
-static int	dup2_close(int src, int dst, const char *ctx)
+static int	dup2_close(int src, int dst, char *ctx)
 {
 	if (src < 0)
 		return (0);
@@ -21,7 +29,7 @@ static int	dup2_close(int src, int dst, const char *ctx)
 }
 
 /* 2/5 */
-static int	open_out_fd(const t_redir *r)
+static int	open_out_fd(t_redir *r)
 {
 	int	flags;
 

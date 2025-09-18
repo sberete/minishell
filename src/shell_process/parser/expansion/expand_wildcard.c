@@ -3,9 +3,9 @@
 
 /* ----- split dir/base pour le motif dir + * ----- */
 
-static char	*dup_dirpath(const char *pat, const char **base)
+static char	*dup_dirpath(char *pat, char **base)
 {
-	const char	*slash;
+	char	*slash;
 
 	*base = pat;
 	if (!pat)
@@ -19,13 +19,13 @@ static char	*dup_dirpath(const char *pat, const char **base)
 	return (ft_substr(pat, 0, (size_t)(slash - pat)));
 }
 
-static int	want_hidden_first(const char *basepat)
+static int	want_hidden_first(char *basepat)
 {
 	return (basepat && basepat[0] == '.');
 }
 
 /* utilise ft_join_sep(a, "/", b) */
-static char	*join_dir_name(const char *dir, const char *name)
+static char	*join_dir_name(char *dir, char *name)
 {
 	if (!dir || dir[0] == '\0')
 		return (ft_join_sep(".", "/", name));
@@ -56,7 +56,7 @@ static int	push_match(char ***arr, size_t *cap, size_t *n, char *joined)
 	return (rc);
 }
 
-static char	**collect_matches(const char *dir, const char *basepat)
+static char	**collect_matches(char *dir, char *basepat)
 {
 	DIR				*d;
 	struct dirent	*ent;
@@ -100,10 +100,10 @@ static char	**collect_matches(const char *dir, const char *basepat)
 /* ----- applique le glob sur un argument ----- */
 
 static int	append_matches_or_literal(char ***out, size_t *cap, size_t *n,
-		const char *arg)
+		char *arg)
 {
 	char		*dir;
-	const char	*base;
+	char	*base;
 	char		**matches;
 	size_t		k;
 

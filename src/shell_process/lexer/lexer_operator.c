@@ -6,7 +6,7 @@
 /*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:53:08 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/14 22:17:34 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/18 01:24:15 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,7 @@ int	is_operator_start(char c)
 	return (0);
 }
 
-int	get_operator_len(const char *str)
+int	get_operator_len(char *str)
 {
 	if (!str || !*str)
 		return (0);

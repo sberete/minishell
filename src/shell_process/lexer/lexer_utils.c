@@ -3,16 +3,16 @@
 /*                                                        :::      ::::::::   */
 /*   lexer_utils.c                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:52:29 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/17 16:18:31 by sxrimu           ###   ########.fr       */
+/*   Updated: 2025/09/18 04:44:43 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-static bool	is_fully_single_quoted(const char *s)
+static bool	is_fully_single_quoted(char *s)
 {
 	size_t	len;
 
@@ -37,7 +37,12 @@ t_token	*new_token_node(char *value_own)
 	}
 	n->value = value_own;
 	n->type = get_token_type(n->value);
-	n->can_expand = (n->type == T_WORD) && !is_fully_single_quoted(n->value);
+	n->can_expand = false;
+	if (n->type == T_WORD)
+	{
+		if (!is_fully_single_quoted(n->value))
+			n->can_expand = true;
+	}
 	n->next = NULL;
 	return (n);
 }
@@ -69,7 +74,7 @@ void	skip_spaces(t_data *data, int *i)
 		(*i)++;
 }
 
-t_token_type	get_token_type(const char *str)
+t_token_type	get_token_type(char *str)
 {
 	if (!str)
 		return (T_UNKNOWN);

@@ -6,7 +6,7 @@
 /*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:49:42 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/14 22:22:12 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/18 00:50:42 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,34 +14,41 @@
 
 static void	free_redirs(t_redir *r)
 {
-	t_redir	*next;
+	t_redir	*n;
 
 	while (r)
 	{
-		next = r->next;
+		n = r->next;
+		free(r->filename);
 		if (r->fd >= 0)
 			close(r->fd);
-		if (r->filename)
-			free(r->filename);
-		if (r->delim)
-			free(r->delim);
 		free(r);
-		r = next;
+		r = n;
 	}
 }
 
-void	free_ast(t_ast *node)
+void	free_ast(t_ast *n)
 {
-	if (!node)
+	size_t	i;
+
+	if (!n)
 		return ;
-	free_ast(node->left);
-	free_ast(node->right);
-	free_ast(node->child);
-	if (node->argv)
-		free_tab(node->argv);
-	if (node->argv_can_expand)
-		free(node->argv_can_expand);
-	if (node->redirs)
-		free_redirs(node->redirs);
-	free(node);
+	free_ast(n->left);
+	free_ast(n->right);
+	free_ast(n->child);
+	if (n->type == NODE_CMD)
+	{
+		if (n->argv)
+		{
+			i = 0;
+			while (n->argv[i])
+			{
+				free(n->argv[i]);
+				i++;
+			}
+			free(n->argv);
+		}
+		free_redirs(n->redirs);
+	}
+	free(n);
 }

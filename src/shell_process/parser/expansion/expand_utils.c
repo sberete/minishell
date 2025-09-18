@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   expand_utils.c                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:51:08 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/16 12:47:34 by sxrimu           ###   ########.fr       */
+/*   Updated: 2025/09/18 01:38:08 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,7 +36,7 @@ void	quote_step(char c, int *in_s, int *in_d)
 }
 
 /* concat dst + src, libère dst, retourne le nouveau (ou NULL) */
-char	*str_append_free(char *dst, const char *src)
+char	*str_append_free(char *dst, char *src)
 {
 	char	*res;
 
@@ -51,7 +51,7 @@ char	*str_append_free(char *dst, const char *src)
 }
 
 /* duplique une tranche s[pos..pos+len[, retourne NULL si fail */
-char	*substr_dup(const char *s, size_t pos, size_t len)
+char	*substr_dup(char *s, size_t pos, size_t len)
 {
 	char	*out;
 
@@ -65,7 +65,7 @@ char	*substr_dup(const char *s, size_t pos, size_t len)
 #include "minishell.h"
 
 /* --- utils : retirer toutes les quotes ' " du lexème (sans interpréter \) --- */
-static char *unquote_all(const char *s)
+static char *unquote_all(char *s)
 {
 	size_t i, j, len;
 	char in_s, in_d;

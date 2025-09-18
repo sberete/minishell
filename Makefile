@@ -1,4 +1,4 @@
-CFLAGS = -Werror -Wextra -Wall -MMD -g3 -fPIC
+CFLAGS = -Werror -Wextra -Wall -MMD -MP -g3 -fPIC
 
 INCLUDES = -Iincludes -I./lib/ft_printf/includes -I./lib/libft/includes -I./lib/get_next_line/includes
 
@@ -7,17 +7,6 @@ LIBFT = lib/libft/lib/libft.a
 GNL = lib/get_next_line/lib/getnextline.a
 
 LDFLAGS = -lreadline
-VALGRIND = valgrind
-
-VGFLAGS  = --leak-check=full \
-            --show-leak-kinds=all \
-            --track-origins=yes \
-            --errors-for-leak-kinds=all \
-            --track-fds=yes \
-            --num-callers=25 \
-            --exit-on-first-error=no \
-            --log-file=valgrind.log \
-			--suppressions=supp.supp
 
 SRC_DIR = src
 OBJ_DIR = objs
@@ -28,10 +17,11 @@ DEPENDS = $(OBJS:.o=.d)
 
 NAME = minishell
 
--include $(DEPENDS)
 
 .PHONY: all
 all: $(NAME)
+
+-include $(DEPENDS)
 
 $(NAME): $(OBJS) $(LIBPRINTF) $(LIBFT) $(GNL)
 	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
@@ -65,28 +55,3 @@ fclean: clean
 
 .PHONY: re
 re: fclean all
-
-
-# Arguments passés à l'exécutable: make valgrind ARGS="…"
-ARGS ?=
-
-# Pour Valgrind, recompile en debug propre (-O0), garde -g3
-VALGRIND_CFLAGS = $(filter-out -O%,$(CFLAGS)) -O0
-
-.PHONY: valgrind vg vg-clean
-valgrind: CFLAGS := $(VALGRIND_CFLAGS)
-valgrind: re
-	-@$(VALGRIND) $(VGFLAGS) ./$(NAME) $(ARGS); \
-	 STATUS=$$?; \
-	 if [ $$STATUS -eq 130 ]; then \
-	   echo "==> minishell interrompu par SIGINT (130), ok"; \
-	 elif [ $$STATUS -ne 0 ]; then \
-	   echo "==> minishell a retourné $$STATUS"; exit $$STATUS; \
-	 fi
-	@echo "==> Report: valgrind.log"
-
-vg: valgrind
-
-vg-clean:
-	@rm -f valgrind.log
-	@echo "valgrind.log removed"

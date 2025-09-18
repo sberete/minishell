@@ -1,7 +1,7 @@
 #include "minishell.h"
 
 /* '*' only, no '?', '[]' ; récursif mais court */
-int	match_star(const char *name, const char *pat)
+int	match_star(char *name, char *pat)
 {
 	if (!*pat)
 		return (*name == '\0');
@@ -24,7 +24,7 @@ int	match_star(const char *name, const char *pat)
 	return (match_star(name + 1, pat + 1));
 }
 
-int	pattern_has_star(const char *s)
+int	pattern_has_star(char *s)
 {
 	size_t	i;
 
@@ -69,7 +69,7 @@ int	arr_grow(char ***arr, size_t *cap)
 	return (0);
 }
 
-int	arr_push_dup(char ***arr, size_t *cap, size_t *n, const char *s)
+int	arr_push_dup(char ***arr, size_t *cap, size_t *n, char *s)
 {
 	char	*dup;
 

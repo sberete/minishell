@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   readline.c                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/14 22:28:37 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/17 16:01:49 by sxrimu           ###   ########.fr       */
+/*   Updated: 2025/09/18 01:51:38 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 
 static int	is_blank(const char *s)
 {
-	size_t i;
+	size_t	i;
 
 	if (!s)
 		return (1);
@@ -48,7 +48,5 @@ int	read_input(t_data *data)
 	}
 	add_history(line);
 	data->line = line;
-	
 	return (1);
 }
-

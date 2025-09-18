@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   path.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sxrimu <sxrimu@student.42.fr>              +#+  +:+       +#+        */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/16 23:01:40 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/17 15:55:23 by sxrimu           ###   ########.fr       */
+/*   Updated: 2025/09/18 01:51:58 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 
 int	is_executable(const char *path)
 {
-	struct stat st;
+	struct stat	st;
 
 	if (!path)
 		return (0);

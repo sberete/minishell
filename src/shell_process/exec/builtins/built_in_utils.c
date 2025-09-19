@@ -6,7 +6,7 @@
 /*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/15 01:26:12 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/18 03:23:29 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/19 03:02:51 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,6 +43,7 @@ t_env	*env_find(t_env *lst, char *key)
 }
 
 /* set: crée si absent, remplace si overwrite=1 */
+/* set: crée si absent, remplace si overwrite=1 */
 int	env_set(t_env **lst, char *key, char *value, int overwrite)
 {
 	t_env	*cur;
@@ -60,7 +61,7 @@ int	env_set(t_env **lst, char *key, char *value, int overwrite)
 		return (0);
 	}
 	if (!overwrite)
-		return (0);
+		return (1);
 	dup = ft_strdup(value);
 	if (!dup)
 		return (-1);
@@ -68,6 +69,7 @@ int	env_set(t_env **lst, char *key, char *value, int overwrite)
 	cur->value = dup;
 	return (0);
 }
+
 
 int	builtin_is_numeric(char *s)
 {

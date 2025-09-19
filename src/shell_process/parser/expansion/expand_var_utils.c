@@ -1,7 +1,19 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   expand_var_utils.c                                 :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/09/19 01:09:31 by sberete           #+#    #+#             */
+/*   Updated: 2025/09/19 01:24:18 by sberete          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "minishell.h"
 
 /* début de nom de var: [A-Za-z_] */
-int var_name_start(char c)
+int	var_name_start(char c)
 {
 	if (ft_isalpha((unsigned char)c))
 		return (1);
@@ -11,7 +23,7 @@ int var_name_start(char c)
 }
 
 /* suite de nom: [A-Za-z0-9_] */
-int var_name_char(char c)
+int	var_name_char(char c)
 {
 	if (ft_isalnum((unsigned char)c))
 		return (1);
@@ -24,9 +36,9 @@ int var_name_char(char c)
    - '?' -> name="?" et renvoie l’index suivant
    - identifiant classique -> name="FOO" et renvoie l’index après le nom
    - sinon -> name="" et renvoie i (rien à consommer) */
-size_t var_name_extract(char *s, size_t i, char **name_out)
+size_t	var_name_extract(char *s, size_t i, char **name_out)
 {
-	size_t j;
+	size_t	j;
 
 	if (!s || !name_out)
 		return (i);
@@ -51,9 +63,9 @@ size_t var_name_extract(char *s, size_t i, char **name_out)
 /* valeur expandée pour un nom:
    - "?" -> itoa(last_exit)
    - sinon -> valeur d'env ("" si absente) */
-char *var_expand_value(char *name, t_data *data)
+char	*var_expand_value(char *name, t_data *data)
 {
-	char *val;
+	char	*val;
 
 	if (!name || !data)
 		return (NULL);

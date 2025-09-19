@@ -1,4 +1,17 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   heredoc.c                                          :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/09/18 23:39:52 by sberete           #+#    #+#             */
+/*   Updated: 2025/09/19 02:19:13 by sberete          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "minishell.h"
+
 char	*hd_strip_outer_quotes(char *s)
 {
 	size_t	len;
@@ -15,6 +28,7 @@ char	*hd_strip_outer_quotes(char *s)
 	}
 	return (ft_strdup(s));
 }
+
 static int	write_all(int fd, const char *s, size_t n)
 {
 	ssize_t	w;
@@ -53,8 +67,8 @@ static int	heredoc_loop(int wfd, const char *delim, int do_expand, t_data *d)
 		free(line);
 		if (!out)
 			return (-1);
-		if (write_all(wfd, out, ft_strlen(out)) != 0
-			|| write_all(wfd, "\n", 1) != 0)
+		if (write_all(wfd, out, ft_strlen(out)) != 0 || write_all(wfd, "\n",
+				1) != 0)
 		{
 			free(out);
 			return (-1);

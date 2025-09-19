@@ -6,7 +6,7 @@
 /*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/15 02:01:15 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/16 22:10:01 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/18 23:15:25 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,4 +69,16 @@ size_t	env_list_size(t_env *lst)
 		lst = lst->next;
 	}
 	return (n);
+}
+
+/* get value (non dupliquée) */
+char	*env_get(t_env *lst, char *key)
+{
+	while (lst)
+	{
+		if (ft_strcmp(lst->key, key) == 0)
+			return (lst->value);
+		lst = lst->next;
+	}
+	return (NULL);
 }

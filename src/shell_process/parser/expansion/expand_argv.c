@@ -1,18 +1,19 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   heredoc_utils.c                                    :+:      :+:    :+:   */
+/*   expand_argv.c                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/09/19 02:18:55 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/19 02:18:56 by sberete          ###   ########.fr       */
+/*   Created: 2025/09/19 01:07:56 by sberete           #+#    #+#             */
+/*   Updated: 2025/09/19 01:08:30 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-// char	*heredoc_expand_line(char *line, t_data *data)
-// {
-// 	return (ms_expand_vars(line, data));
-// }
+/* Compat si du code appelle encore l’ancien nom */
+char	**expand_argv_dup(t_ast *cmd, t_data *data)
+{
+	return (expand_argv_full(cmd, data));
+}

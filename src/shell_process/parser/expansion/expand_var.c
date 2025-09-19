@@ -1,109 +1,133 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   expand_var.c                                       :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/09/19 01:22:12 by sberete           #+#    #+#             */
+/*   Updated: 2025/09/19 01:23:56 by sberete          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   expand_var.c                                       :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "minishell.h"
 
-static int append_slice(char **dst, char *src, size_t off, size_t len)
+typedef struct s_expv_ctx
 {
-	char *part, *join;
+	char	*s;
+	size_t	i;
+	size_t	lit_start;
+	int		in_s;
+	int		in_d;
+	char	*out;
+	t_data	*data;
+}			t_expv_ctx;
 
-	if (len == 0)
-		return (0);
-	part = ft_substr(src, off, len);
-	if (!part)
-		return (1);
-	if (!*dst)
-		*dst = part;
-	else
-	{
-		join = ft_strjoin(*dst, part);
-		free(part);
-		if (!join)
-			return (1);
-		free(*dst);
-		*dst = join;
-	}
-	return (0);
+static int	flush_lit(t_expv_ctx *c)
+{
+	return (append_slice(&c->out, (char *)c->s, c->lit_start, c->i
+			- c->lit_start));
 }
 
-static int append_cstr(char **dst, char *s)
+static int	append_and_free(char **out, char *s)
 {
-	char *join;
-
 	if (!s)
-		return (0);
-	if (!*dst)
-	{
-		*dst = ft_strdup(s);
-		return (*dst == NULL);
-	}
-	join = ft_strjoin(*dst, s);
-	if (!join)
 		return (1);
-	free(*dst);
-	*dst = join;
+	if (append_cstr(out, s))
+	{
+		free(s);
+		return (1);
+	}
+	free(s);
 	return (0);
 }
 
-char *ms_expand_vars(char *s, t_data *data)
+static int	handle_dollar(t_expv_ctx *c)
 {
-	size_t i, lit_start;
-	int    in_s, in_d;
-	char  *out, *name, *val;
+	size_t	next;
+	char	*name;
+	char	*val;
+
+	if (!c->s[c->i])
+		return (append_cstr(&c->out, "$"));
+	next = var_name_extract((char *)c->s, c->i, &name);
+	if (!name)
+		return (1);
+	if (name[0] == '\0' && next == c->i)
+	{
+		free(name);
+		if (append_cstr(&c->out, "$"))
+			return (1);
+		c->lit_start = c->i;
+		return (0);
+	}
+	val = var_expand_value(name, c->data);
+	free(name);
+	if (append_and_free(&c->out, val))
+		return (1);
+	c->i = next;
+	c->lit_start = c->i;
+	return (0);
+}
+
+static int	process_char(t_expv_ctx *c)
+{
+	if ((c->s[c->i] == '\'' && !c->in_d) || (c->s[c->i] == '\"' && !c->in_s))
+	{
+		if (flush_lit(c))
+			return (1);
+		if (c->s[c->i] == '\'')
+			c->in_s = !c->in_s;
+		else
+			c->in_d = !c->in_d;
+		c->i++;
+		c->lit_start = c->i;
+		return (0);
+	}
+	if (c->s[c->i] == '$' && !c->in_s)
+	{
+		if (flush_lit(c))
+			return (1);
+		c->i++;
+		if (handle_dollar(c))
+			return (1);
+		return (0);
+	}
+	c->i++;
+	return (0);
+}
+
+/* ---- publique ---- */
+char	*ms_expand_vars(char *s, t_data *data)
+{
+	t_expv_ctx	c;
 
 	if (!s)
 		return (NULL);
-	in_s = 0;
-	in_d = 0;
-	out = NULL;
-	lit_start = 0;
-	i = 0;
-	while (s[i])
+	c.s = s;
+	c.i = 0;
+	c.lit_start = 0;
+	c.in_s = 0;
+	c.in_d = 0;
+	c.out = NULL;
+	c.data = data;
+	while (c.s[c.i])
 	{
-		if (s[i] == '\'' && !in_d) { in_s = !in_s; i++; continue; }
-		if (s[i] == '\"' && !in_s) { in_d = !in_d; i++; continue; }
-		if (s[i] == '$' && !in_s)
-		{
-			/* flush le littéral précédent */
-			if (append_slice(&out, s, lit_start, i - lit_start))
-				return (free(out), NULL);
-			i++;
-			/* fin de chaîne après '$' -> garder '$' littéral */
-			if (!s[i])
-			{
-				if (append_cstr(&out, "$")) return (free(out), NULL);
-				break;
-			}
-			/* extraire le nom */
-			{
-				size_t next = var_name_extract(s, i, &name);
-				if (!name) return (free(out), NULL);
-				if (name[0] == '\0' && next == i)
-				{
-					/* $ suivi d’un non-identifiant -> littéral '$' */
-					free(name);
-					if (append_cstr(&out, "$")) return (free(out), NULL);
-					lit_start = i; /* on ne consomme rien, on reprendra ici */
-					continue;
-				}
-				/* expand la valeur */
-				val = var_expand_value(name, data);
-				free(name);
-				if (!val) return (free(out), NULL);
-				if (append_cstr(&out, val)) { free(val); return (free(out), NULL); }
-				free(val);
-				i = next;
-				lit_start = i;
-				continue;
-			}
-		}
-		i++;
+		if (process_char(&c))
+			return (free(c.out), NULL);
 	}
-	/* flush le reste */
-	if (append_slice(&out, s, lit_start, i - lit_start))
-		return (free(out), NULL);
-	return (out ? out : ft_strdup(""));
-}
-
-/* Compat si du code appelle encore l’ancien nom */
-char **expand_argv_dup(t_ast *cmd, t_data *data)
-{
-	return (expand_argv_full(cmd, data));
+	if (flush_lit(&c))
+		return (free(c.out), NULL);
+	if (c.out)
+		return (c.out);
+	return (ft_strdup(""));
 }

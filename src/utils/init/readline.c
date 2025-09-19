@@ -6,7 +6,7 @@
 /*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/14 22:28:37 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/18 01:51:38 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/19 04:14:48 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,16 +31,18 @@ int	read_input(t_data *data)
 	line = readline("minishell > ");
 	if (line == NULL)
 	{
-		if (g_exit_status)
-		{
-			g_exit_status = 0;
-			data->last_exit = 130;
-			return (2);
-		}
 		printf("exit\n");
 		rl_clear_history();
 		return (0);
 	}
+	// if (g_exit_status == 128 + SIGINT)
+	// {
+	// 	write(STDERR_FILENO, "\n", 1);
+	// 	free(line);
+	// 	data->last_exit = 128 + SIGINT;
+	// 	g_exit_status = 0;
+	// 	return (2);
+	// }
 	if (is_blank(line))
 	{
 		free(line);
@@ -48,5 +50,7 @@ int	read_input(t_data *data)
 	}
 	add_history(line);
 	data->line = line;
+	if (g_exit_status == 128 + SIGINT)
+    	data->last_exit = 128 + SIGINT;
 	return (1);
 }

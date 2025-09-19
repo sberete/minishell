@@ -6,7 +6,7 @@
 /*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:49:42 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/18 00:50:42 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/19 02:41:32 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,36 +19,46 @@ static void	free_redirs(t_redir *r)
 	while (r)
 	{
 		n = r->next;
-		free(r->filename);
-		if (r->fd >= 0)
-			close(r->fd);
+		if (r->filename)
+			free(r->filename);
+		if (r->delim)
+			free(r->delim);
 		free(r);
 		r = n;
 	}
 }
 
-void	free_ast(t_ast *n)
+static void	free_cmd_fields(t_ast *n)
 {
 	size_t	i;
 
+	i = 0;
+	if (n->argv)
+	{
+		while (n->argv[i])
+		{
+			free(n->argv[i]);
+			i++;
+		}
+		free(n->argv);
+	}
+	if (n->argv_can_expand)
+		free(n->argv_can_expand);
+	if (n->redirs)
+		free_redirs(n->redirs);
+}
+
+void	free_ast(t_ast *n)
+{
 	if (!n)
 		return ;
-	free_ast(n->left);
-	free_ast(n->right);
-	free_ast(n->child);
+	if (n->left)
+		free_ast(n->left);
+	if (n->right)
+		free_ast(n->right);
+	if (n->child)
+		free_ast(n->child);
 	if (n->type == NODE_CMD)
-	{
-		if (n->argv)
-		{
-			i = 0;
-			while (n->argv[i])
-			{
-				free(n->argv[i]);
-				i++;
-			}
-			free(n->argv);
-		}
-		free_redirs(n->redirs);
-	}
+		free_cmd_fields(n);
 	free(n);
 }

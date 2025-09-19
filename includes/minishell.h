@@ -6,7 +6,7 @@
 /*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:46:06 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/18 06:07:59 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/19 04:03:48 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -225,6 +225,7 @@ int								export_print_sorted_fd(t_env *lst, int fd);
 void							export_print_sorted(t_env *lst);
 int								parse_assignment(char *s, char **key,
 									char **val, int *append);
+
 /* ============================== BUILTINS ================================ */
 
 int								is_builtin(char *name);
@@ -274,6 +275,9 @@ int								set_sigaction(int signum, void (*handler)(int),
 									int flags);
 int								set_signal_ign(int signum);
 int								set_signal_dfl(int signum);
+void							print_signal_msg_if_any(t_data *data);
+void							update_last_exit_from_wait(t_data *data,
+									int status);
 
 /* ================================= MISC ================================ */
 
@@ -303,6 +307,14 @@ char							**expand_argv_vars(char **argv,
 size_t							var_name_extract(char *s, size_t i,
 									char **name_out);
 char							*var_expand_value(char *name, t_data *data);
+int								append_slice(char **dst, char *src, size_t off,
+									size_t len);
+int								append_cstr(char **dst, char *s);
+int								want_hidden_first(char *basepat);
+char							*dup_dirpath(char *pat, char **base);
+char							*join_dir_name(char *dir, char *name);
+char							**collect_matches(char *dir, char *basepat);
+char							*unquote_all(char *s);
 
 /* =========================== EXPANSION (GLOB) =========================== */
 

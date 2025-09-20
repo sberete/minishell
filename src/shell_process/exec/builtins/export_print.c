@@ -6,12 +6,11 @@
 /*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/18 04:55:02 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/18 04:56:27 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/20 18:13:25 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
-#include <unistd.h>
 
 static void	env_array_insertion_sort(t_env **arr, size_t n)
 {

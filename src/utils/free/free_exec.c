@@ -1,21 +1,24 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   exec_seq.c                                         :+:      :+:    :+:   */
+/*   free_exec.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/09/19 18:06:51 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/19 21:52:52 by sberete          ###   ########.fr       */
+/*   Created: 2025/09/19 22:00:36 by sberete           #+#    #+#             */
+/*   Updated: 2025/09/20 00:54:27 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-int	exec_seq_node(t_ast *n, t_data *data)
+void	child_free_and_exit(char **argv, char **envp, char *path, int code)
 {
-	if (!n)
-		return (1);
-	(void)exec_ast(n->left, data);
-	return (exec_ast(n->right, data));
+	if (argv)
+		free_tab(argv);
+	if (envp)
+		free_tab(envp);
+	if (path)
+		free(path);
+	exit(code);
 }

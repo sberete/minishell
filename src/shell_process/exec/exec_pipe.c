@@ -1,137 +1,109 @@
-// #include "minishell.h"
-// #include <errno.h>
-// #include <stdio.h>
-// #include <unistd.h>
-// #include <sys/wait.h>
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   exec_pipe.c                                        :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/09/19 23:11:03 by sberete           #+#    #+#             */
+/*   Updated: 2025/09/20 17:20:57 by sberete          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
 
-// static int	setup_child_pipe_io(t_exec *x, int is_last)
-// {
-// 	if (x->prev_read >= 0)
-// 	{
-// 		if (dup2(x->prev_read, STDIN_FILENO) < 0)
-// 		{
-// 			fprintf(stderr, "minishell: dup2 stdin: ");
-// 			perror(NULL);
-// 			return (1);
-// 		}
-// 		close(x->prev_read);
-// 		x->prev_read = -1;
-// 	}
-// 	if (!is_last)
-// 	{
-// 		close(x->pipe_fd[0]);
-// 		if (dup2(x->pipe_fd[1], STDOUT_FILENO) < 0)
-// 		{
-// 			fprintf(stderr, "minishell: dup2 stdout: ");
-// 			perror(NULL);
-// 			return (1);
-// 		}
-// 		close(x->pipe_fd[1]);
-// 		x->pipe_fd[1] = -1;
-// 	}
-// 	return (0);
-// }
+#include "minishell.h"
 
-// static int	wait_pipeline(pid_t last_pid)
-// {
-// 	int		rc;
-// 	int		s;
-// 	pid_t	w;
+static void	child_exec_node(t_ast *node, t_exec *ex)
+{
+	if (node->type == NODE_CMD)
+		exec_cmd_in_child(node, ex);
+	else if (node->type == NODE_GROUP)
+		exit(run_subshell(node->child, ex->data));
+	else
+		exit(exec_ast(node, ex->data));
+}
 
-// 	rc = 0;
-// 	while ((w = waitpid(-1, &s, 0)) > 0)
-// 	{
-// 		if (w == last_pid)
-// 		{
-// 			if (WIFEXITED(s))
-// 				rc = WEXITSTATUS(s);
-// 			else if (WIFSIGNALED(s))
-// 				rc = 128 + WTERMSIG(s);
-// 			else
-// 				rc = 1;
-// 		}
-// 	}
-// 	if (w < 0 && errno != ECHILD)
-// 	{
-// 		fprintf(stderr, "minishell: waitpid: ");
-// 		perror(NULL);
-// 	}
-// 	return (rc);
-// }
+static void	parent_after_fork(t_exec *ex, pid_t pid, size_t i)
+{
+	ex->pid[i] = pid;
+	exec_close_prev_read(ex);
+	if (i < ex->len - 1)
+	{
+		close(ex->pipe_fd[1]);
+		ex->prev_read = ex->pipe_fd[0];
+		ex->pipe_fd[0] = -1;
+		ex->pipe_fd[1] = -1;
+	}
+	else
+	{
+		exec_close_pipe(ex->pipe_fd);
+		exec_close_prev_read(ex);
+	}
+}
 
-// int	exec_pipeline_node(t_ast *n, t_data *data)
-// {
-// 	t_ast	*nodes[256];
-// 	int		count;
-// 	int		i;
-// 	t_exec	x;
-// 	pid_t	last_pid;
-// 	pid_t	pid;
+int	spawn_and_setup_one(size_t i, t_exec *ex, t_ast **nodes)
+{
+	pid_t	pid;
 
-// 	count = 0;
-// 	while (n && n->type == NODE_PIPE && count < 255)
-// 	{
-// 		nodes[count++] = n->left;
-// 		n = n->right;
-// 	}
-// 	nodes[count++] = n;
+	if (open_next_pipe(ex, i) != 0)
+		return (1);
+	pid = fork();
+	if (pid < 0)
+	{
+		err_sys_label("fork");
+		exec_close_pipe(ex->pipe_fd);
+		exec_close_prev_read(ex);
+		return (1);
+	}
+	if (pid == 0)
+	{
+		signals_setup_child();
+		child_dup_io(ex, i);
+		exec_reset_cmd(ex, nodes[i]);
+		child_exec_node(nodes[i], ex);
+	}
+	parent_after_fork(ex, pid, i);
+	return (0);
+}
 
-// 	exec_ctx_init_cmd(&x, data, NULL);
-// 	x.prev_read = -1;
-// 	last_pid = -1;
-// 	i = 0;
-// 	while (i < count)
-// 	{
-// 		if (i < count - 1)
-// 		{
-// 			if (pipe(x.pipe_fd) != 0)
-// 			{
-// 				fprintf(stderr, "minishell: pipe: ");
-// 				perror(NULL);
-// 				exec_ctx_close_pipes(&x);
-// 				return (1);
-// 			}
-// 		}
-// 		else
-// 			x.pipe_fd[0] = x.pipe_fd[1] = -1;
+int	pipeline_prepare(t_ast *n, t_exec *ex, t_ast **nodes, t_data *data)
+{
+	size_t	len;
 
-// 		pid = fork();
-// 		if (pid < 0)
-// 		{
-// 			fprintf(stderr, "minishell: fork: ");
-// 			perror(NULL);
-// 			exec_ctx_close_pipes(&x);
-// 			return (1);
-// 		}
-// 		if (pid == 0)
-// 		{
-// 			int	is_last = (i == count - 1);
-// 			signals_setup_child();
-// 			if (setup_child_pipe_io(&x, is_last) != 0)
-// 				_exit(1);
-// 			/* exécuter le noeud dans l’enfant */
-// 			if (nodes[i]->type == NODE_CMD)
-// 				child_exec_cmd(nodes[i], &x); /* la même que dans exec_command.c */
-// 			else if (nodes[i]->type == NODE_GROUP)
-// 				_exit(run_subshell(nodes[i]->child, data));
-// 			else
-// 				_exit(exec_ast(nodes[i], data));
-// 		}
-// 		/* parent */
-// 		if (x.prev_read >= 0)
-// 			close(x.prev_read);
-// 		if (i < count - 1)
-// 		{
-// 			close(x.pipe_fd[1]);
-// 			x.prev_read = x.pipe_fd[0];
-// 			x.pipe_fd[0] = -1;
-// 			x.pipe_fd[1] = -1;
-// 		}
-// 		last_pid = pid;
-// 		i++;
-// 	}
-// 	/* parent: attente et nettoyage */
-// 	exec_ctx_close_pipes(&x);
-// 	data->last_exit = wait_pipeline(last_pid);
-// 	return (data->last_exit);
-// }
+	exec_init(ex, data);
+	len = flatten_pipeline(n, nodes);
+	if (exec_pids_init(ex, len) != 0)
+	{
+		err_sys_label("malloc pids");
+		return (1);
+	}
+	return (0);
+}
+
+int	exec_pipeline_node(t_ast *n, t_data *data)
+{
+	t_exec	ex;
+	t_ast	*nodes[256];
+	size_t	i;
+	int		rc;
+
+	if (pipeline_prepare(n, &ex, nodes, data) != 0)
+		return (1);
+	i = 0;
+	rc = 0;
+	while (i < ex.len)
+	{
+		if (spawn_and_setup_one(i, &ex, nodes) != 0)
+		{
+			rc = 1;
+			break ;
+		}
+		i++;
+	}
+	if (rc != 0)
+		ex.len = i;
+	if (rc == 0)
+		rc = wait_all_children(&ex);
+	exec_pids_free(&ex);
+	ex.data->last_exit = rc;
+	return (rc);
+}

@@ -6,7 +6,7 @@
 /*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/07 17:56:28 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/18 02:38:27 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/20 18:12:48 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,6 @@ int	shell_process(t_data *data)
 		set_exit_status(2);
 		return (1);
 	}
-	// print_tokens(data->tokens);
 	head = data->tokens;
 	data->ast = parse_entry(data);
 	free_token_list(&head);
@@ -36,7 +35,6 @@ int	shell_process(t_data *data)
 		set_exit_status(2);
 		return (1);
 	}
-	print_ast(data->ast, 0);
 	exec_ast(data->ast, data);
 	free_ast(data->ast);
 	data->ast = NULL;

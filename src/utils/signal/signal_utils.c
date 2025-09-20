@@ -6,7 +6,7 @@
 /*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/07 16:50:15 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/19 04:03:39 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/19 18:04:33 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,7 @@ void	sync_exit_status(t_data *data)
 {
 	data->last_exit = (int)g_exit_status;
 }
+
 void	print_signal_msg_if_any(t_data *data)
 {
 	if (data->last_exit == 128 + SIGINT)

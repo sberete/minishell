@@ -6,7 +6,7 @@
 /*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/14 22:39:43 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/18 03:31:14 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/20 18:09:48 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,7 +36,10 @@ int	run_builtin_argv(t_data *data, char **av)
 	if (!av || !av[0])
 		return (0);
 	if (str_eq(av[0], "echo"))
-		return (builtin_echo(data, av));
+	{
+		builtin_echo(data, av);
+		return (0);
+	}
 	if (str_eq(av[0], "cd"))
 		return (builtin_cd(data, av));
 	if (str_eq(av[0], "pwd"))

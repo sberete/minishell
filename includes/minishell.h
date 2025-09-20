@@ -6,7 +6,7 @@
 /*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:46:06 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/19 04:03:48 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/20 00:55:17 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -113,7 +113,8 @@ typedef struct s_exec
 	char						*path;
 	char						**argv;
 	char						**envp;
-	int							envp_built;
+	pid_t						*pid;
+	size_t						len;
 	t_redir						*redirs;
 	struct s_data				*data;
 }								t_exec;
@@ -134,6 +135,7 @@ typedef struct s_data
 	char						*line;
 	t_token						*tokens;
 	t_ast						*ast;
+	t_ast						**ast_root;
 	t_exec						*exec;
 	t_env						*env;
 	int							last_exit;
@@ -162,6 +164,8 @@ void							print_syntax_error(char *msg);
 void							free_data(t_data *data);
 void							free_data_tmp(t_data *data);
 int								read_input(t_data *data);
+void							child_exit_all(t_exec *ex, t_ast *cmd,
+									int code);
 
 /* ================================= AST =================================== */
 
@@ -201,9 +205,11 @@ int								ps_handle_redir(t_token **pt,
 									t_token_type *prev);
 int								ps_handle_word(t_token **pt,
 									t_token_type *prev);
-
-/* parse_line.c */
 t_ast							*parse_entry(t_data *data);
+int								open_heredoc_pipe(t_exec *ex);
+int								heredoc_wait_handle(pid_t pid, int rfd,
+									t_data *d);
+
 /* ============================= EXEC / HEREDOC ============================ */
 
 int								exec_ast(t_ast *node, t_data *data);
@@ -212,7 +218,27 @@ int								prepare_all_heredocs(t_ast *node, t_data *data);
 int								save_stdio(int *saved_in, int *saved_out);
 void							restore_stdio(int saved_in, int saved_out);
 int								dup2_and_close(int from, int to);
-
+int								fd_write_all(int fd, void *buf, size_t n);
+int								run_one_heredoc_child(t_redir *r, t_exec *ex);
+void							fd_close_quiet(int *fd);
+void							fd_close_pair(int fd2[2]);
+size_t							flatten_pipeline(t_ast *n, t_ast **nodes);
+int								open_next_pipe(t_exec *ex, size_t i);
+void							child_dup_io(t_exec *ex, size_t i);
+void							wait_set_last_if_final(t_exec *ex, size_t i,
+									int s, int *rc);
+int								wait_all_children(t_exec *ex);
+void							exec_reset_cmd(t_exec *ex, t_ast *cmd);
+int								redir_err_open(char *name);
+int								redir_apply_in(t_redir *r);
+int								dup2_close(int src, int dst, char *ctx);
+int								open_out_fd(t_redir *r);
+int								exec_pids_init(t_exec *ex, size_t len);
+void							exec_pids_free(t_exec *ex);
+int								redir_apply_out(t_redir *r);
+int								redir_touch_in(t_redir *r);
+int								redir_touch_out(t_redir *r);
+void							redir_discard_heredoc(t_redir *r);
 /* ============================ BUILTIN UTILS ============================== */
 
 int								str_eq(char *a, char *b);
@@ -338,12 +364,12 @@ char							**expand_argv_full(t_ast *cmd, t_data *data);
 char							**expand_argv_dup(t_ast *cmd, t_data *data);
 
 /* ============================= EXEC DETAILS ============================= */
-
-// int								exec_group_node(t_ast *n, t_data *data);
-// int								exec_pipeline_node(t_ast *n, t_data *data);
-// int								exec_cmd_node(t_ast *n, t_data *data);
-// int								exec_and_or_node(t_ast *n, t_data *d);
-// int								exec_seq_node(t_ast *n, t_data *data);
+void							exec_cmd_in_child(t_ast *cmd, t_exec *ex);
+int								exec_group_node(t_ast *n, t_data *data);
+int								exec_pipeline_node(t_ast *n, t_data *data);
+int								exec_cmd_node(t_ast *n, t_data *data);
+int								exec_and_or_node(t_ast *n, t_data *d);
+int								exec_seq_node(t_ast *n, t_data *data);
 void							child_exec_cmd(t_ast *cmd, t_exec *x);
 int								run_subshell(t_ast *sub, t_data *data);
 void							exec_ctx_init_cmd(t_exec *x, struct s_data *d,
@@ -358,6 +384,17 @@ void							set_exit_status(int code);
 void							print_indent(int depth);
 void							print_redirs(t_redir *r, int depth);
 size_t							env_list_size(t_env *lst);
+void							child_free_and_exit(char **argv, char **envp,
+									char *path, int code);
+void							err_simple(char *msg);
+void							err_cmd_not_found(char *cmd);
+void							err_sys_label(char *label);
+void							exec_close_pipe(int pfd[2]);
+void							exec_close_prev_read(t_exec *ex);
+void							exec_init(t_exec *ex, t_data *data);
+int								execp_spawn_all(t_exec *ex, t_ast **nodes);
+int								spawn_and_setup_one(size_t i, t_exec *ex,
+									t_ast **nodes);
 
 /* =========================== WILDCARD UTIL ARR ========================== */
 

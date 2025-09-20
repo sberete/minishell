@@ -1,8 +1,16 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   exec_utils.c                                       :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/09/19 18:06:58 by sberete           #+#    #+#             */
+/*   Updated: 2025/09/20 18:09:20 by sberete          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "minishell.h"
-#include <sys/wait.h>
-#include <errno.h>
-#include <stdio.h>
-#include <unistd.h>
 
 int	wait_status_to_code(int s)
 {
@@ -19,10 +27,8 @@ int	wait_and_get_status(pid_t pid)
 
 	if (waitpid(pid, &s, 0) < 0)
 	{
-		fprintf(stderr, "minishell: waitpid: ");
-		perror(NULL);
+		err_sys_label("waitpid");
 		return (1);
 	}
 	return (wait_status_to_code(s));
 }
-

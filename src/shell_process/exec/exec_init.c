@@ -1,21 +1,29 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   exec_seq.c                                         :+:      :+:    :+:   */
+/*   exec_init.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/09/19 18:06:51 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/19 21:52:52 by sberete          ###   ########.fr       */
+/*   Created: 2025/09/19 22:34:01 by sberete           #+#    #+#             */
+/*   Updated: 2025/09/19 23:48:15 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-int	exec_seq_node(t_ast *n, t_data *data)
+void	exec_init(t_exec *ex, t_data *data)
 {
-	if (!n)
-		return (1);
-	(void)exec_ast(n->left, data);
-	return (exec_ast(n->right, data));
+	ex->prev_read = -1;
+	ex->pipe_fd[0] = -1;
+	ex->pipe_fd[1] = -1;
+	ex->fd_heredoc[0] = -1;
+	ex->fd_heredoc[1] = -1;
+	ex->path = NULL;
+	ex->argv = NULL;
+	ex->envp = NULL;
+	ex->pid = NULL;
+	ex->len = 0;
+	ex->redirs = NULL;
+	ex->data = data;
 }

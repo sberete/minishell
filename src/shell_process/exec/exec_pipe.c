@@ -5,105 +5,61 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/09/19 23:11:03 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/20 17:20:57 by sberete          ###   ########.fr       */
+/*   Created: 2025/09/20 22:41:13 by sberete           #+#    #+#             */
+/*   Updated: 2025/09/20 22:47:34 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-static void	child_exec_node(t_ast *node, t_exec *ex)
+int	pipeline_parent(pid_t lpid, pid_t rpid, int p[2], t_data *data)
 {
-	if (node->type == NODE_CMD)
-		exec_cmd_in_child(node, ex);
-	else if (node->type == NODE_GROUP)
-		exit(run_subshell(node->child, ex->data));
-	else
-		exit(exec_ast(node, ex->data));
-}
+	int	st;
+	int	rc;
 
-static void	parent_after_fork(t_exec *ex, pid_t pid, size_t i)
-{
-	ex->pid[i] = pid;
-	exec_close_prev_read(ex);
-	if (i < ex->len - 1)
+	st = 0;
+	rc = 0;
+	xclose(&p[0]);
+	xclose(&p[1]);
+	if (lpid > 0)
 	{
-		close(ex->pipe_fd[1]);
-		ex->prev_read = ex->pipe_fd[0];
-		ex->pipe_fd[0] = -1;
-		ex->pipe_fd[1] = -1;
+		if (waitpid(lpid, NULL, 0) < 0)
+			rc |= err_sys_ctx("waitpid");
 	}
-	else
+	if (rpid > 0)
 	{
-		exec_close_pipe(ex->pipe_fd);
-		exec_close_prev_read(ex);
+		if (waitpid(rpid, &st, 0) < 0)
+			rc |= err_sys_ctx("waitpid");
+		else
+			data->last_exit = wait_status_to_code(st);
 	}
-}
-
-int	spawn_and_setup_one(size_t i, t_exec *ex, t_ast **nodes)
-{
-	pid_t	pid;
-
-	if (open_next_pipe(ex, i) != 0)
+	if (rc)
 		return (1);
-	pid = fork();
-	if (pid < 0)
-	{
-		err_sys_label("fork");
-		exec_close_pipe(ex->pipe_fd);
-		exec_close_prev_read(ex);
-		return (1);
-	}
-	if (pid == 0)
-	{
-		signals_setup_child();
-		child_dup_io(ex, i);
-		exec_reset_cmd(ex, nodes[i]);
-		child_exec_node(nodes[i], ex);
-	}
-	parent_after_fork(ex, pid, i);
-	return (0);
-}
-
-int	pipeline_prepare(t_ast *n, t_exec *ex, t_ast **nodes, t_data *data)
-{
-	size_t	len;
-
-	exec_init(ex, data);
-	len = flatten_pipeline(n, nodes);
-	if (exec_pids_init(ex, len) != 0)
-	{
-		err_sys_label("malloc pids");
-		return (1);
-	}
-	return (0);
+	return (data->last_exit);
 }
 
 int	exec_pipeline_node(t_ast *n, t_data *data)
 {
-	t_exec	ex;
-	t_ast	*nodes[256];
-	size_t	i;
-	int		rc;
+	int		p[2];
+	pid_t	lpid;
+	pid_t	rpid;
 
-	if (pipeline_prepare(n, &ex, nodes, data) != 0)
+	if (!n || !n->left || !n->right)
 		return (1);
-	i = 0;
-	rc = 0;
-	while (i < ex.len)
+	if (pipe(p) < 0)
+		return (err_sys_ctx("pipe"));
+	lpid = spawn_left(n->left, data, p);
+	xclose(&p[1]);
+	if (lpid < 0)
 	{
-		if (spawn_and_setup_one(i, &ex, nodes) != 0)
-		{
-			rc = 1;
-			break ;
-		}
-		i++;
+		xclose(&p[0]);
+		return (1);
 	}
-	if (rc != 0)
-		ex.len = i;
-	if (rc == 0)
-		rc = wait_all_children(&ex);
-	exec_pids_free(&ex);
-	ex.data->last_exit = rc;
-	return (rc);
+	rpid = spawn_right(n->right, data, p);
+	xclose(&p[0]);
+	{
+		waitpid(lpid, NULL, 0);
+		return (1);
+	}
+	return (pipeline_parent(lpid, rpid, p, data));
 }

@@ -6,7 +6,7 @@
 /*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/18 06:12:38 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/18 06:12:39 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/20 21:05:36 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,22 +60,21 @@ int	parser_syntax(t_token *t)
 t_ast	*parse_entry(t_data *data)
 {
 	t_token	*cur;
-	t_ast	*root;
 
 	if (!data || !data->tokens)
 		return (NULL);
 	if (!parser_syntax(data->tokens))
 		return (NULL);
 	cur = data->tokens;
-	root = parse_sequence(&cur);
-	if (!root)
+	data->ast = parse_sequence(&cur);
+	if (!data->ast)
 		return (NULL);
 	if (cur != NULL)
 	{
-		free_ast(root);
+		free_ast(data->ast);
 		print_syntax_error("trailing tokens");
 		set_exit_status(2);
 		return (NULL);
 	}
-	return (root);
+	return (data->ast);
 }

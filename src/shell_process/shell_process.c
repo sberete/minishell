@@ -6,11 +6,13 @@
 /*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/07 17:56:28 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/20 18:12:48 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/20 22:18:59 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
+
+void	print_AST_test(t_ast *command);
 
 int	shell_process(t_data *data)
 {
@@ -31,7 +33,6 @@ int	shell_process(t_data *data)
 	if (!data->ast)
 	{
 		print_syntax_error("parser");
-		free_ast(data->ast);
 		set_exit_status(2);
 		return (1);
 	}

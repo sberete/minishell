@@ -6,7 +6,7 @@
 /*   By: sberete <sberete@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/25 21:46:06 by sberete           #+#    #+#             */
-/*   Updated: 2025/09/20 00:55:17 by sberete          ###   ########.fr       */
+/*   Updated: 2025/09/20 22:47:21 by sberete          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -135,7 +135,6 @@ typedef struct s_data
 	char						*line;
 	t_token						*tokens;
 	t_ast						*ast;
-	t_ast						**ast_root;
 	t_exec						*exec;
 	t_env						*env;
 	int							last_exit;
@@ -209,15 +208,22 @@ t_ast							*parse_entry(t_data *data);
 int								open_heredoc_pipe(t_exec *ex);
 int								heredoc_wait_handle(pid_t pid, int rfd,
 									t_data *d);
-
+void							xclose(int *pfd);
+int								dup2_and_close(int *src, int dst, char *ctx);
+pid_t							spawn_left(t_ast *sub, t_data *data,
+									int pipe[2]);
+pid_t							spawn_right(t_ast *sub, t_data *data,
+									int pipe[2]);
 /* ============================= EXEC / HEREDOC ============================ */
-
+int								err_sys_ctx(char *ctx);
+void							child_prepare_redirs(t_exec *ex, t_ast *cmd);
+void							child_prepare_argv(t_ast *cmd, t_exec *ex);
 int								exec_ast(t_ast *node, t_data *data);
 int								prepare_one_heredoc(t_redir *r, t_data *data);
 int								prepare_all_heredocs(t_ast *node, t_data *data);
 int								save_stdio(int *saved_in, int *saved_out);
 void							restore_stdio(int saved_in, int saved_out);
-int								dup2_and_close(int from, int to);
+int								dup2_and_close(int *src, int dst, char *ctx);
 int								fd_write_all(int fd, void *buf, size_t n);
 int								run_one_heredoc_child(t_redir *r, t_exec *ex);
 void							fd_close_quiet(int *fd);
